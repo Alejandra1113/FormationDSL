@@ -84,6 +84,7 @@ B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } ELSE B | *all_of* *ide
 A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As | *type* *identifier* = I | *type* *identifier* = *from* *identifier* *take* IExp *starting_at* IExp
 
 As -> M | I | *identifier*.*identifier*(ARG) | *identifier*[ IExpr ]
+
 BExp ->  *not* BExp | BTerm B2Exp | ( BExp ) B2Exp
 
 B2Exp -> *and* BExp | *or* BExp | epsilon
