@@ -2,39 +2,42 @@
 
 ## Palabras Reservadas
 
-definitions -> region de definir formaciones
-groups -> region de definir alias de grupos
-begin -> regin de definicion de pasos
-end -> fin de los pasos
-line_up -> orden de formacion
-with -> asignacion deun grupo a una formacion
-in -> asignacion de traslacion
-heading -> asignacion de rotacion
-args -> argumentos extras a pasar
-def -> definir funcion
-G -> grupo
-while -> ciclo
-step -> formaciones
-if/else -> condicional
-allof -> iterador de grupo
-of -> relacion entre personas de un grupo
-at -> relacion de direccion
-prev\next -> referencias a personas antes y detras en grupos
+- definitions -> region de definir formaciones
+- groups -> region de definir alias de grupos
+- begin -> regin de definicion de pasos
+- end -> fin de los pasos
+- line_up -> orden de formacion
+- with -> asignacion deun grupo a una formacion
+- in -> asignacion de traslacion
+- heading -> asignacion de rotacion
+- args -> argumentos extras a pasar
+- def -> definir funcion
+- G -> grupo
+- while -> ciclo
+- step -> formaciones
+- if/else -> condicional
+- allof -> iterador de grupo
+- of -> relacion entre personas de un grupo
+- at -> relacion de direccion
+- prev\next -> referencias a personas antes y detras en grupos
+- from -> instruccion sobre elementos de un grupo
+- take -> tomar cierta cantidad de miembros de un grupo
+- borrow\starting_at\to -> traspaso de personas de un grupo a otro
 
 ### tipos
 
-vector -> tupla
-[] -> array
-bool -> booleano
-int -> entero
-group -> grupo
+- vector -> tupla
+- [] -> array
+- bool -> booleano
+- int -> entero
+- group -> grupo
 
 ### vecotres direccionales built-in
 
-up
-down
-left
-rigth
+- up
+- down
+- left
+- rigth
 
 ## Apariencia del script
 
