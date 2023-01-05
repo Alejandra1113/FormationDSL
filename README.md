@@ -41,7 +41,7 @@
 
 ## Apariencia del script
 
-```
+``` python
 definitions
 
     def <name_of_formation> (<type_of_param> <name_of_param>, ...)
@@ -68,6 +68,7 @@ begin
 
 end
 ```
+
 
 ## Gramatica
 
@@ -124,3 +125,4 @@ G -> *identifier* = I
 I -> [*num* I2] | [*num* : *num*]
 
 I2 -> , *num* I2 | epsilon
+
