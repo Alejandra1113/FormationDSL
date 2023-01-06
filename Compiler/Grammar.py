@@ -20,7 +20,7 @@ P %= type_id + Id + P1 | Epsilon
 
 P1 %=  comma + type_id + Id + P1 | Epsilon
 
-B %= A + B | wloop + opar + BExp + cpar + ocbra + B + ccbra + B | condif + opar + BExp + cpar + ocbra + B + ccbra + ELSE + B | iter_aof + Id + at + VExp + of + rpos + B | from_op + Id + borrow + IExp + st_at + IExp + to + Id + B | node VExp of node B | Id + opar + ARG + cpar | Id + dot + Id + opar + ARG + cpar | Epsilon
+B %= A + B | wloop + opar + BExp + cpar + ocbra + B + ccbra + B | condif + opar + BExp + cpar + ocbra + B + ccbra + ELSE + B | iter_aof + Id + at + VExp + of + rpos + B | from_op + Id + borrow + IExp + st_at + IExp + to + Id + B | Id + obra + IExp + cbra + VExp + of + Id + obra + IExp + cbra + B | Id + opar + ARG + cpar | Id + dot + Id + opar + ARG + cpar | Epsilon
 
 A %= type_id + Id + assign + As | Id + obra + IExp + cbra + assign + As | Id + assign + As | type_id + Id + assign + I | type_id + Id + assign + from_op + Id + take + IExp + st_at + IExp
 
@@ -52,7 +52,7 @@ XV %= plus + VExp + XV | minus + VExp + XV | IExp | Epsilon
 
 VT %= opar + IExp + comma + IExp + cpar | opar + VExp + cpar | Id | direc + N
 
-R %= lineup + Id + with_op + obra + cbra + in_op + VExp + heading + direc + args + ARG + RN
+R %= lineup + Id + with_op + I + in_op + VExp + heading + direc + args + ARG + RN
 
 RN %= step + R | R | Epsilon
 
