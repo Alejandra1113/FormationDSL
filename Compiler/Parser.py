@@ -25,22 +25,41 @@ class ShiftReduceParser:
         stack = [ 0 ]
         # cursor = 0
         output = []
+      
+       #==========
+        ast = []
 
         while True:
             # print(output)
             state = stack[-1]
             # if self.verbose: print(stack, '<---||--->', w[cursor:])
-
-            
             action, tag = self.action[(state, lookahead.token_type.Name)]
             
             if action == ShiftReduceParser.SHIFT:
                 stack.append(tag)
                 lookahead = next(w)
-                 
+                
+              #=========================================
+                ast.append(lookahead.lex)
+              #=========================================
+              
             elif action == ShiftReduceParser.REDUCE:
                 prod = self.G.Productions[tag]
                 left, rigth = prod
+                
+              #===========================================  
+                attributes = prod.attributes
+                assert all(rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
+                rule = attributes[0]
+                
+                if len(rigth):
+                    synteticed = [None] + stack[-len(rigth):]
+                    value = rule(None, synteticed)
+                    ast[-len(rigth):] = [value]
+                else:
+                    ast.append(rule(None, None))
+              #===========================================
+                
                 for i in rigth:
                     stack.pop()
                 
@@ -49,7 +68,7 @@ class ShiftReduceParser:
                 output.append(prod)
                 
             elif action == ShiftReduceParser.OK:
-                    return output
+                    return output, ast[0]
             else:   
                 raise TypeError
             
