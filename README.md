@@ -82,7 +82,7 @@ P1 -> ,*type* *identifier* P1 | epsilon
 
 B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } ELSE B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon
 
-A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As | *type* *identifier* = I | *type* *identifier* = *from* *identifier* *take* IExp *starting_at* IExp
+A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As  | *type* *identifier* = *from* *identifier* *take* IExp *starting_at* IExp
 
 As -> M | I | *identifier*.*identifier*(ARG) | *identifier*[ IExpr ]
 
