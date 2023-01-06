@@ -271,7 +271,11 @@ def compute_firsts(G):
     # First(Vt) + First(Vt) + First(RightSides)
     return firsts
 
-def expand(item, firsts):
+def expand(item, firsts, seen = None):
+    
+    if seen is None: 
+        seen = []
+        
     next_symbol = item.NextSymbol
     if next_symbol is None or not next_symbol.IsNonTerminal:
         return []
@@ -291,7 +295,9 @@ def expand(item, firsts):
     for i in next_symbol.productions:
         itm = Item(i, 0, lookaheads=lookaheads)
         result.append(itm)
-        result += expand(itm, firsts)
+        if itm.NextSymbol in seen: continue
+        seen.append(itm.NextSymbol)
+        result += expand(itm, firsts, seen)
     # Your code here!!! (Build and return child items)
     return result
 
