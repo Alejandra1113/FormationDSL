@@ -22,6 +22,9 @@ class Symbol(object):
 
         if isinstance(other, (Sentence)):
             return SentenceList(Sentence(self), other)
+        
+        if isinstance(other,(NonTerminal)):
+            return SentenceList(Sentence(self),Sentence(other))
 
         raise TypeError(other)
 

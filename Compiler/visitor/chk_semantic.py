@@ -1,5 +1,5 @@
 import Compiler.utils as util
-from Compiler.semantic import *
+from Compiler.semantic.language import *
 from .visitor import *
 from ._def import *
 
@@ -14,8 +14,8 @@ class SemanticCheckerVisitor(object):
     @when(ProgramNode)
     def visit(self, node: ProgramNode, context: ProgramContext, index: int = 0):
         def_error = self.visit(node.definitions, context, index)
-        # begin_error = self.visit(node.begin_with, context, index)
-        return def_error  # + begin_error
+        begin_error = self.visit(node.begin_with, context, index)
+        return def_error + begin_error
 
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
@@ -23,17 +23,29 @@ class SemanticCheckerVisitor(object):
         for i, child in enumerate(node.functions):
             child_err = self.visit(child, context, i)
             util.update_errs(errors, child_err)
-
         return errors
 
-    # @when(BeginWithNode)
-    # def visit(self, node: BeginWithNode, context: OtherContext):
-    #     pass
+    @when(BeginWithNode)
+    def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
+        errors = []
+        new_context = context.get_context(index)
+        for i, child in enumerate(node.step):
+            child_err = self.visit(child, new_context, i)
+            util.update_errs(errors, child_err)
+        return errors
+
+    @when(StepNode)
+    def visit(self, node: StepNode, context: ProgramContext, index: int = 0):
+        errors = []
+        for child in node.instructions:
+            child_err = self.visit(child, context, index)
+            util.update_errs(errors, child_err)
+        return errors
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
+        errors = []
         new_context = context.get_context(index)
-        errors = new_context or []
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
             util.update_errs(errors, child_err)
@@ -123,6 +135,16 @@ class SemanticCheckerVisitor(object):
         if not context.is_var_defined(node.lex):
             return [f"variable {node.lex} no esta definida"]
         return None
+
+    @when(AssignNode)
+    def visit(self, node: AssignNode, context: OtherContext, index: int = 0):
+        errors = []
+        if not context.is_var_defined(node.lex):
+            errors.append(f"variable {node.lex} no esta definida")
+
+        expr_err = self.visit(node.expr, context, index)
+        util.update_errs(errors, expr_err)
+        return errors
 
     @when(CallNode)
     def visit(self, node: CallNode, context: OtherContext, index: int = 0):

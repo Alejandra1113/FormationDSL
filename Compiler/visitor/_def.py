@@ -3,6 +3,12 @@
 __all__ = ['Context', 'ProgramContext', 'OtherContext']
 
 
+class SemanticError(Exception):
+    @property
+    def text(self):
+        return self.args[0]
+
+
 def check_params(params_1, params_2):
     if len(params_1) != len(params_2):
         return False
@@ -13,14 +19,16 @@ def check_params(params_1, params_2):
 
 
 class VariableInfo:
-    def __init__(self, name):
+    def __init__(self, name, type):
         self.name = name
+        self.type = type
 
 
 class FunctionInfo:
-    def __init__(self, name, params):
+    def __init__(self, name, params, params_types):
         self.name = name
         self.params = params
+        self.params_types = params_types
 
 
 class Context:
@@ -48,6 +56,9 @@ class ProgramContext(Context):
             self.local_funcs.append(func)
             return func
 
+    def get_func_info(self, fname, params):
+        return self.get_local_function_info(fname, params)
+
     def is_func_defined(self, fname, params):
         return self.is_local_func(fname, params)
 
@@ -70,10 +81,19 @@ class OtherContext(Context):
     def is_func_defined(self, fname, params):
         return self.parent.is_func_defined(fname, params)
 
+    def get_func_info(self, fname, params):
+        return self.parent.get_func_info(fname, params)
+
     def define_variable(self, vname):
         if not self.is_var_defined(vname):
             var = VariableInfo(vname)
             self.local_vars.append(var)
+
+    def get_variable_info(self, vname):
+        variable = self.get_local_variable_info(vname)
+        if variable:
+            return variable
+        return self.parent.get_variable_info(vname)
 
     def is_var_defined(self, vname):
         if type(self) == ProgramContext or not self.is_local_var(vname):
