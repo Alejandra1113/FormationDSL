@@ -1,6 +1,6 @@
 from automata import build_LR1_automaton
 from pandas import DataFrame
-
+from errors import ParsingError
 
 class ShiftReduceParser:
     SHIFT = 'SHIFT'
@@ -21,6 +21,12 @@ class ShiftReduceParser:
 
     def _build_parsing_table(self):
         raise NotImplementedError()
+    
+    def error(self, msg=None):
+        """
+        Raises a parsing error.
+        """
+        raise ParsingError(msg)
 
     def __call__(self, w):
         stack = [0]
@@ -35,15 +41,20 @@ class ShiftReduceParser:
             # print(output)
             state = stack[-1]
             # if self.verbose: print(stack, '<---||--->', w[cursor:])
-            action, tag = self.action[(state, lookahead.token_type.Name)]
-
+            
+            try:
+                action, tag = self.action[(state, lookahead.token_type.Name)]
+            except:
+                self.error(f"Unexpected token {lookahead.token_type.lex} en la fila {lookahead.row}, columna {lookahead.column}")
+            
+            
             if action == ShiftReduceParser.SHIFT:
                 stack.append(tag)
+              # =========================================
                 ast.append(lookahead.lex)
+              # =========================================
                 lookahead = next(w)
 
-              # =========================================
-              # =========================================
 
             elif action == ShiftReduceParser.REDUCE:
                 prod = self.G.Productions[tag]
@@ -71,6 +82,8 @@ class ShiftReduceParser:
                 output.append(prod)
 
             elif action == ShiftReduceParser.OK:
+                if next(w) != self.G.eof :
+                    self.error("Bad EOF")
                 return output, ast[0]
             else:
                 raise TypeError
@@ -124,39 +137,6 @@ class LR1Parser(ShiftReduceParser):
         assert key not in table or table[key] == value, 'Shift-Reduce or Reduce-Reduce conflict!!!'
         table[key] = value
 
-
-def evaluate_reverse_parse(right_parse, operations, tokens):
-    if not right_parse or not operations or not tokens:
-        return
-
-    right_parse = iter(right_parse)
-    tokens = iter(tokens)
-    stack = []
-    for operation in operations:
-        if operation == ShiftReduceParser.SHIFT:
-            token = next(tokens)
-            stack.append(token.lex)
-
-        elif operation == ShiftReduceParser.REDUCE:
-            production = next(right_parse)
-            head, body = production
-            attributes = production.attributes
-            assert all(
-                rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
-            rule = attributes[0]
-
-            if len(body):
-                synteticed = [None] + stack[-len(body):]
-                value = rule(None, synteticed)
-                stack[-len(body):] = [value]
-            else:
-                stack.append(rule(None, None))
-        else:
-            raise Exception('Invalid action!!!')
-
-    assert len(stack) == 1
-    assert isinstance(next(tokens).token_type, EOF)
-    return stack[0]
 
 ######################## Visualize DataTable #############################
 
