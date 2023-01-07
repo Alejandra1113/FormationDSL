@@ -93,10 +93,10 @@ T %= T + div + F, lambda h, s: DivNode(s[1], s[3])
 T %= T + rem + F, lambda h, s: ModNode(s[1], s[3])
 T %= F, lambda h, s: s[1]
 
-F %= bool_value, lambda h, s: AtomicNode(s[1])
-F %= num, lambda h, s: AtomicNode(s[1])
+F %= bool_value, lambda h, s: ConstantNode(s[1])
+F %= num, lambda h, s: ConstantNode(s[1])
 F %= V, lambda h, s: s[1]
-F %= Id, lambda h, s: AtomicNode(s[1])
+F %= Id, lambda h, s: VariableNode(s[1])
 F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: CallNode(s[3], s[5] + [s[1]])
 F %= opar + BE + cpar, lambda h, s: s[2]
 F %= direc, lambda h, s: s[1]
