@@ -12,7 +12,7 @@ return_term, continue_term, break_term = Gram.Terminals('return continue break')
 eof = Gram.EOF
 
 
-D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V')
+D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1 = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1')
 
 
 S = Gram.NonTerminal('S', True)
@@ -44,13 +44,20 @@ ELSE %= condelse + ocbra + B + ccbra, lambda h,s: [ConditionNode(None, s[3])]
 ELSE %= Gram.Epsilon, lambda h,s: []
 
 A %= type_id + Id + assign + AS, lambda h, s: VarDeclarationNode(s[2], s[1], s[4])
+A %= type_id + type_id + Id + assign + AS, lambda h, s: ArrayDeclarationNode(s[1], s[2], s[3], s[4])
 A %= Id + obra + BE + cbra + assign + AS, lambda h, s: SetIndexNode(s[1], s[3], s[6])
 A %= Id + assign + AS, lambda h, s: AssignNode(s[1], s[3])
 A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s: GroupVarDeclarationNode(s[1], s[2], s[5], s[9], s[7])
 
-AS %= Id + obra + BE + cbra, lambda h, s: CallNode(s[1], s[3])
-AS %= I, lambda h, s: s[1]
+AS %= Id + obra + ARG + cbra, lambda h, s: CallNode(s[1], s[3])
 AS %= BE, lambda h, s: s[1]
+AS %= obra + ARR + cbra, lambda h,s:  ArrayNode(s[2])
+
+
+ARR %= BE + ARR1, lambda h,s: [s[1]] + s[2]
+ARR %= Gram.Epsilon, lambda h, s: []
+ARR1 %= comma + BE + ARR1, lambda h,s : [s[2]] + s[3] 
+ARR1 %= Gram.Epsilon, lambda h, s: []
 
 R %= lineup + Id + with_op + I + in_op + BE + heading + direc + args + opar + ARG + cpar + RN, lambda h, s: ([BeginCallNode(
     s[2], s[6], s[8], [s[4]]+s[11])], s[13][1]) if not s[13][0] else ([BeginCallNode(s[2], s[6], s[8], [s[4]]+s[11])] + s[13][0], s[13][1])

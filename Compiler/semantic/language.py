@@ -49,9 +49,15 @@ class VarDeclarationNode(DeclarationNode):
         self.type = type
         self.expr = expr
 
-
+class ArrayDeclarationNode(DeclarationNode):
+    def __init__(self, type1, type2, id, expr):
+        self.type1 = type1
+        self.type2 = type2
+        self.id = id
+        self.expr = expr
+        
 class ParamNode(DeclarationNode):
-    def __init__(self, idx, type):
+    def __init__(self,idx, type):
         self.idx = idx
         self.type = type
 
@@ -128,6 +134,7 @@ class TernaryNode(ExpressionNode):
         self.left = left
         self.right = right
         self.expr = expr
+        
 
 
 class ConstantNode(AtomicNode):
