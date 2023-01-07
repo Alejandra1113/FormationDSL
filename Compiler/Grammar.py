@@ -17,7 +17,7 @@ D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V = Gram.NonTerm
 S = Gram.NonTerminal('S', True)
 
 # S %= definition + D + groups + G + begin_with + num + R + end, lambda h, s: ProgramNode(s[2], BeginWithNode(s[6], s[7][2]))
-S %= definition + D + begin_with + num + R + end, lambda h, s: ProgramNode(DefinitionsNode(s[2]), BeginWithNode(s[4], s[5][1]))
+S %= definition + D + begin_with + num + R + end, lambda h, s: ProgramNode(DefinitionsNode(s[2]), BeginWithNode(s[4], [StepNode(s[5][0])] +  s[5][1]))
 
 D %= deff + Id + opar + P + cpar + ocbra + B + ccbra + D, lambda h, s: [FuncDeclarationNode(s[2], s[4], s[7])] + s[9]
 D %= Gram.Epsilon, lambda h, s: []
