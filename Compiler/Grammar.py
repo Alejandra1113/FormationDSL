@@ -12,7 +12,7 @@ return_term, continue_term, break_term = Gram.Terminals('return continue break')
 eof = Gram.EOF
 
 
-D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1 = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1')
+D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1, BRK = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1 BRK')
 
 
 S = Gram.NonTerminal('S', True)
@@ -30,7 +30,7 @@ P1 %= comma + type_id + Id + P1, lambda h, s: [ParamNode(s[3], s[2])] + s[4]
 P1 %= Gram.Epsilon, lambda h, s: []
 
 B %= A + B, lambda h, s: [s[1]] + s[2]
-B %= wloop + opar + BE + cpar + ocbra + B + ccbra + B, lambda h, s: [LoopNode(s[3], s[6])] + s[8]
+B %= wloop + opar + BE + cpar + ocbra + BRK + ccbra + B, lambda h, s: [LoopNode(s[3], s[6])] + s[8]
 B %= condif + opar + BE + cpar + ocbra + B + ccbra + ELSE + B, lambda h, s: [ConditionNode(s[3], s[6])] + s[8] + s[9]
 B %= iter_aof + Id + at + BE + of + rpos + B, lambda h, s: [IterNode(s[2], s[4], s[6])] + s[7]
 B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [BorrowNode(s[2], s[8], s[4], s[5])] + s[9]
@@ -39,6 +39,15 @@ B %= Id + obra + BE + cbra + BE + of + Id + obra + BE + cbra + B, lambda h, s: [
 B %= Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[1], s[3])] + s[5]
 B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[3], [s[1]] + s[5])] + s[6]
 B %= Gram.Epsilon, lambda h, s: []
+B %= return_term, lambda h,s: [SpecialNode(s[1])] 
+
+
+BRK %= B + BRK, lambda h,s: s[1] + s[2] 
+BRK %= break_term + BRK, lambda h,s: [SpecialNode(s[1])]  + s[2] 
+BRK %= continue_term + BRK, lambda h,s: [SpecialNode(s[1])]  + s[2]  
+BRK %= Gram.Epsilon, lambda h,s: [] 
+
+
 
 ELSE %= condelse + ocbra + B + ccbra, lambda h,s: [ConditionNode(None, s[3])]
 ELSE %= Gram.Epsilon, lambda h,s: []

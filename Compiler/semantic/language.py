@@ -148,6 +148,8 @@ class VariableNode(AtomicNode):
 class InstantiateNode(AtomicNode):
     pass
 
+class SpecialNode(AtomicNode):
+    pass
 
 class CallNode(AtomicNode):
     def __init__(self, idx, args):
