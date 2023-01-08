@@ -40,8 +40,26 @@ class CilVisitor(object):
         ######################################################
 
         definitions = self.visit(node.definitions)
-        return ProgramNode(definitions, node.begin_with)
-
+        bw = self.visit(node.begin_with)
+        return ProgramNode(definitions,bw)
+    @when(BeginWithNode)
+    def visit(self, node):
+        step = [] 
+        for s in node.step:
+            step.append(self.visit(s))
+        return BeginWithNode(node.num, step)
+    
+    @when(StepNode)
+    def visit(self, node):
+        inst = []
+        for i in node.instructions:
+            inst.append(self.visit(i))
+        return StepNode(inst) 
+    
+    @when(BeginCallNode)
+    def visit(self, node): 
+        return BeginCallNode(self.fun_names(node.lex), node.args, node.poss, node.rot)  
+    
     @when(DefinitionsNode)
     def visit(self, node):
         ###############################
