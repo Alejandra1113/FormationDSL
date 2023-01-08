@@ -136,8 +136,8 @@ class CilVisitor(object):
         arg = []
         for a in node.args:
             arg.append(self.visit(a))
-                    
-        return DynamicCallNode(node.lex,self.set_name(node.head), arg, node.type)
+        h = self.visit(node.head)           
+        return DynamicCallNode(node.lex,h, arg, node.type)
     
     @when(CallNode)
     def visit(self, node):
@@ -152,7 +152,7 @@ class CilVisitor(object):
         # node.collec = collec
         # node.expr = expr
         # node.dir = dir   
-        name = self.set_name(node.collec)
+        name = self.visit(node.collec)
         temp = f"temp_{len(self.temp_names)}" 
         expr = self.visit(node.expr)
         self.temp_names.append(temp)
@@ -183,9 +183,11 @@ class CilVisitor(object):
         # node.to_collec = str
         # node.init = ExpressionNode
         # node.len = ExpresionNode 
+        fromm = self.visit(node.from_collec)
+        to = self.visit(node.to_collec)
         init = self.visit(node.init)
         lenn = self.visit(node.len)
-        return BorrowNode(self.set_name(node.from_collec), self.set_name(node.to_collec), init, lenn) 
+        return BorrowNode(fromm, to, init, lenn) 
     
     
     @when(ConditionNode)  
