@@ -34,8 +34,7 @@ B %= wloop + opar + BE + cpar + ocbra + BRK + ccbra + B, lambda h, s: [LoopNode(
 B %= condif + opar + BE + cpar + ocbra + B + ccbra + ELSE + B, lambda h, s: [ConditionNode(s[3], s[6])] + s[8] + s[9]
 B %= iter_aof + Id + at + BE + of + rpos + B, lambda h, s: [IterNode(s[2], s[4], s[6])] + s[7]
 B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [BorrowNode(s[2], s[8], s[4], s[5])] + s[9]
-B %= Id + obra + BE + cbra + BE + of + Id + obra + BE + cbra + B, lambda h, s: [LinkNode(GetIndexNode(
-        s[1], s[3]), GetIndexNode(s[7], s[9]), s[5])] + s[11]
+B %= Id + obra + E + cbra + BE + of + Id + obra + E + cbra + B, lambda h, s: [LinkNode(GetIndexNode( s[1], s[3]), GetIndexNode(s[7], s[9]), s[5])] + s[11]
 B %= Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[1], s[3])] + s[5]
 B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[3], [s[1]] + s[5])] + s[6]
 B %= Gram.Epsilon, lambda h, s: []
@@ -54,7 +53,7 @@ ELSE %= Gram.Epsilon, lambda h,s: []
 
 A %= type_id + Id + assign + AS, lambda h, s: VarDeclarationNode(s[2], s[1], s[4])
 A %= type_id + type_id + Id + assign + AS, lambda h, s: ArrayDeclarationNode(s[1], s[2], s[3], s[4])
-A %= Id + obra + BE + cbra + assign + AS, lambda h, s: SetIndexNode(s[1], s[3], s[6])
+A %= Id + obra + E + cbra + assign + AS, lambda h, s: SetIndexNode(s[1], s[3], s[6])
 A %= Id + assign + AS, lambda h, s: AssignNode(s[1], s[3])
 A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s: GroupVarDeclarationNode(s[1], s[2], s[5], s[9], s[7])
 
@@ -116,6 +115,6 @@ F %= V, lambda h, s: s[1]
 F %= Id, lambda h, s: VariableNode(s[1])
 F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: CallNode(s[3], s[5] + [s[1]])
 F %= opar + BE + cpar, lambda h, s: s[2]
-F %= direc, lambda h, s: s[1]
+F %= direc, lambda h, s: ConstantNode(s[1])
 
 V %= opar + E + comma + E + cpar, lambda h, s: VectNode(s[2], s[4])
