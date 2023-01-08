@@ -147,7 +147,7 @@ class CilVisitor(object):
         
         for a in node.args:
             arg.append(self.visit(a))
-        return CallNode(node.lex, arg, node.type)
+        return CallNode(node.lex, arg, node.type, node.return_type)
          
     @when(IterNode)  
     def visit(self, node):
@@ -160,22 +160,22 @@ class CilVisitor(object):
         self.temp_names.append(temp)
         lines = []
         if node.dir == "prev":
-            lines.append(VarDeclarationNode(temp,None,MinusNode(CallNode("len",[ name], Int()), ConstantNode(1,Int()), Int())))
+            lines.append(VarDeclarationNode(temp,None,MinusNode(CallNode("len",[ name], 'int', return_type =Int()), ConstantNode(1,return_type =Int()), return_type =Int())))
             link = LinkNode(
-                            GetIndexNode(name,VariableNode(temp, Int())), 
-                            GetIndexNode(name,MinusNode(VariableNode(temp, Int()), ConstantNode(1,Int()))),
+                            GetIndexNode(name,VariableNode(temp, 'int' ,return_type =Int())), 
+                            GetIndexNode(name,MinusNode(VariableNode(temp,'int', return_type =Int()), ConstantNode(1,return_type =Int()))),
                             expr
                             )
             
-            lines.append(LoopNode(GtNode(name,ConstantNode(0,Int()), Bool()), [link, AssignNode(temp,MinusNode(VariableNode(temp, Int()),ConstantNode(1, Int()), Int()), Int())]))   
+            lines.append(LoopNode(GtNode(name,ConstantNode(0,'int',return_type =Int()), return_type = Bool()), [link, AssignNode(temp,MinusNode(VariableNode(temp,'int', return_type =Int()),ConstantNode(1, 'int', return_type =Int()), return_type =Int()), return_type =Int())]))   
         else:   
-            lines.append(VarDeclarationNode(temp,None,ConstantNode(0, Int())))
+            lines.append(VarDeclarationNode(temp,None,ConstantNode(0,'int', return_type =Int())))
             link = LinkNode(
-                            GetIndexNode(name,VariableNode(temp, Int())), 
-                            GetIndexNode(name,PlusNode(VariableNode(temp, Int()), ConstantNode(1, Int()))),
+                            GetIndexNode(name,VariableNode(temp, 'int', return_type =Int())), 
+                            GetIndexNode(name,PlusNode(VariableNode(temp, return_type =Int()), ConstantNode(1, return_type =Int()))),
                             expr
                             )
-            lines.append(LoopNode(LtNode(name,MinusNode(CallNode("len",[name], Int()) ,ConstantNode(1, Int()), Int()), Bool()), [link, AssignNode(temp,PlusNode(VariableNode(temp, Int()),ConstantNode(1, Int())), Int())]))   
+            lines.append(LoopNode(LtNode(name,MinusNode(CallNode("len",[name], 'int', return_type =Int()) ,ConstantNode(1,'int', return_type =Int()), return_type =Int()), return_type = Bool()), [link, AssignNode(temp,PlusNode(VariableNode(temp, 'int', return_type =Int()),ConstantNode(1, 'int', return_type =Int())), return_type =Int())]))   
     
         return lines    
 
@@ -215,7 +215,7 @@ class CilVisitor(object):
     
     @when(SetIndexNode)
     def visit(self, node):                
-        return SetIndexNode(self.visit(node.idx), self.visit(node.index), self.visit(self.expr), node.type)
+        return SetIndexNode(self.visit(node.idx), self.visit(node.index), self.visit(self.expr))
     
                         
     @when(ConstantNode)
@@ -224,7 +224,7 @@ class CilVisitor(object):
 
     @when(VariableNode)
     def visit(self,node):
-        return VariableNode(self.set_name(node.lex), node.type)
+        return VariableNode(self.set_name(node.lex), node.type, node.return_type)
 
     @when(InstantiateNode)
     def visit(self,node):
@@ -237,17 +237,17 @@ class CilVisitor(object):
 
     @when(NotNode)
     def visit(self, node):
-        return NotNode(self.visit(node.expr), node.type)
+        return NotNode(self.visit(node.expr), node.return_type)
 
 
     @when(PlusNode)
     def visit(self, node):
-        return PlusNode(self.visit(node.left), self.visit(node.right), node.type)
+        return PlusNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(MinusNode)
     def visit(self, node):
-        return MinusNode(self.visit(node.left), self.visit(node.right), node.type)
+        return MinusNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(StarNode)
@@ -257,32 +257,32 @@ class CilVisitor(object):
 
     @when(DivNode)
     def visit(self, node):
-        return DivNode(self.visit(node.left), self.visit(node.right), node.type)
+        return DivNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(ModNode)
     def visit(self, node):
-        return ModNode(self.visit(node.left), self.visit(node.right), node.type)
+        return ModNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(VectNode)
     def visit(self, node):
-        return VectNode(self.visit(node.left), self.visit(node.right), node.type)
+        return VectNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(AndNode)
     def visit(self, node):
-        return AndNode(self.visit(node.left), self.visit(node.right), node.type)
+        return AndNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(OrNode)
     def visit(self, node):
-        return (self.visit(node.left), self.visit(node.right), node.type)
+        return (self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(EqNode)
     def visit(self, node):
-        return (self.visit(node.left), self.visit(node.right), node.type)
+        return (self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(EqlNode)
@@ -292,22 +292,22 @@ class CilVisitor(object):
 
     @when(EqgNode)
     def visit(self, node):
-        return EqgNode(self.visit(node.left), self.visit(node.right), node.type)
+        return EqgNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(GtNode)
     def visit(self, node):
-        return GtNode(self.visit(node.left), self.visit(node.right), node.type)
+        return GtNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(LtNode)
     def visit(self, node):
-        return LtNode(self.visit(node.left), self.visit(node.right), node.type)
+        return LtNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(GetIndexNode)
     def visit(self, node):
-        return GetIndexNode(self.visit(node.left), self.visit(node.right), node.type)
+        return GetIndexNode(self.visit(node.left), self.visit(node.right), node.return_type)
 
 
     @when(SliceNode)
