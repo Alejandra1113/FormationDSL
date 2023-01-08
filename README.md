@@ -1,48 +1,57 @@
 # FormationDSL
 
-## Palabras Reservadas
+Este DSL está dirigido al trabajo con formaciones de individuos. El lenguaje permite crear formaciones para `grupos` mediante instrucciones que facilitan la
+declaración de la formacion a partir de relaciones entre los miembros de un grupo. El código consta de 3 regiones fundamentales: Declaraciones de formaciones, Declaraciones de grupos, Declaraciones de rutinas de formaciones, marcadas con las palabras claves definitions, groups, begin_with respectivamente. Para las definiciones de formaciones se tiene una variable `group G` que no es necesaria escribirla como parámetro pues se asume que para tener una formación se tiene que tener un grupo.  
 
-- definitions -> region de definir formaciones
-- groups -> region de definir alias de grupos
-- begin -> regin de definicion de pasos
+# Sobre el DSL
+## Palabras Reservadas y Operaciones Build In
+
+- definitions -> región de definir formaciones
+- groups -> región de definir alias de grupos
+- begin_with -> región de definicion de pasos
 - end -> fin de los pasos
-- line_up -> orden de formacion
-- with -> asignacion deun grupo a una formacion
-- in -> asignacion de traslacion
-- heading -> asignacion de rotacion
-- args -> argumentos extras a pasar
-- def -> definir funcion
+- line_up - with - in - heading - args  -> orden de formación
+- def -> definir función
 - G -> grupo
 - while -> ciclo
 - step -> formaciones
-- if/else -> condicional
-- allof -> iterador de grupo
-- of -> relacion entre personas de un grupo
-- at -> relacion de direccion
-- prev\next -> referencias a personas antes y detras en grupos
-- from -> instruccion sobre elementos de un grupo
-- take -> tomar cierta cantidad de miembros de un grupo
-- borrow\starting_at\to -> traspaso de personas de un grupo a otro
+- if \ else -> condicional
+- all_of - at - of -> iterador de grupo estableciendo relaciones entre los miembros
+- prev \ next -> referencias a personas antes y detras en grupos
+- from - take - starting_at -> tomar cierta cantidad de miembros de un grupo para crear una partición en dos subgrupos
+- from - borrow - starting_at - to -> traspaso de personas de un grupo a otro
+- up \ down \ left \ right \ up-left \ up-right \ down-left \ down-right -> vectores basicos direccionales
+  
+## Tipos
 
-### tipos
-
-- vector -> tupla
-- [] -> array
+- vector -> tupla de enteros
 - bool -> booleano
 - int -> entero
 - group -> grupo
-
-### vecotres direccionales built-in
-
-- up
-- down
-- left
-- rigth
+- \[ \] -> array
 
 ## Apariencia del script
 
 ``` python
 definitions
+
+    def dos_filas()
+    {
+        int temp  = G.len() // 2
+        int resto = G.len() % 2
+        int i = 0
+        while(i < temp + resto)
+        {
+            if(i < temp - 1)
+            {
+                G[temp + 1] down of G[i]
+            }
+            if( i > 0)
+            {
+                G[temp + i - 1] left of G[temp + 1]
+            }
+        }
+    }
 
     def <name_of_formation> (<type_of_param> <name_of_param>, ...)
     {   
@@ -53,93 +62,209 @@ definitions
 
 groups 
 
-    <alias_of_group> = <identifier1>, <identifier2>, ... 
-
+    <alias_of_group_1> = [ <int_value> ,<int_value> , ... ]
+    <alias_of_group_2> = [ <int_value> : <int_value> ]
     ...
 
-begin 
-
-    step 
-        line_on <name_of_formation> with <alias_of_gropu> in <vector> heading <direction> args (<param1>, <param2>, ...)
+begin_with <int_value> 
+        
+        line_on <name_of_formation> with <alias_of_group_1> in <vector> heading <direction> args(<param1>, <param2>, ...)
+        line_on <name_of_formation> with <alias_of_group_2> in <vector> heading <direction> args(<param1>, <param2>, ...)
 
         ...
+step 
+        line_on <name_of_formation> with <alias_of_group_1> in <vector> heading <direction> args(<param1>, <param2>, ...)
+        line_on <name_of_formation> with <alias_of_group_2> in <vector> heading <direction> args(<param1>, <param2>, ...)
+        
+        ...
+step 
+        ...
+
+...
+
+end
+```
+
+# Gramática
+
+Para definir la gramática utilizamos la clase `Grammar` provista en las clases prácticas, la que fue incorporada al proyecto en el archivo `pycompiler.py`. Las producciones, terminales y no terminales de nustra gramática para el DSL se muestran detalladamente
+en el siguiente listado, su equivalente en código se encuentra en el archivo `Grammar.py` donde además se especifica el comportamiento de cada producción al sintetizar los valores mediante una gramática atributada.
+
+`start`
+
+S -> *definition* D *begin_with* *num* R *end* 
+
+`definitions`
+
+D -> *def* *id* ( P ) { B } D\
+D -> epsilon
+
+
+`params` 
+
+P -> *type* *id* P1 \
+P -> *type* \[ \] *id* P1 \
+p -> epsilon
+
+P1 -> , *type* *id* P1\
+P1 -> , *type* \[ \] *id* P1\
+P1 -> epsilon
+
+`body`
+
+B -> A B\
+B -> *while* ( BExp ) { B BRK } B\
+B -> *if* ( BExp ) { B BRK } ELSE B\
+B -> *all_of* *id* *at* BE *of* *r_poss* B\
+B -> *from* *id* *borrow* BE *starting_at* BE *to* *id* B\
+B -> *id*\[ E \] BE *of* *id*\[ E \] B\
+B -> *id*( ARG ) B\
+B -> *id*.*id*( ARG ) B\
+B -> epsilon\
+B -> return
+
+`breaks`
+
+BRK -> break\
+BRK -> continue\
+BRK -> epsilon
+
+`else`
+
+ELSE -> *else* { B BRK}\
+ELSE -> epsilon
+
+`asign`
+
+A -> *type* *id* = As\
+A -> *type* \[ \] *id* = As\
+A -> *id*[ E ] = As\
+A -> *id* = As\
+A -> *type* *id* = *from* *id* *take* BE *starting_at* BE
+
+AS -> BE\
+AS -> *id*(ARG)\
+AS -> [ ARR ]
+
+`arrays`
+
+ARR -> E ARR1\
+ARR -> epsilon
+
+ARR1 -> , E ARR1\
+ARR1 -> epsilon
+
+`steps`
+
+R -> *line_up* *id* *with* I *in* BE *heading* *dir* *args* ARG RN
+
+RN -> *step* R\
+RN -> R\
+RN -> epsilon
+
+`arguments`
+
+ARG -> BE ARG1\
+ARG -> epsilon
+
+ARG1 -> , BE ARG1\
+ARG1 -> epsilon
+
+`iter`
+
+I -> [*num* I2]\
+I -> [*num* : *num*]
+
+I2 -> , *num* I2\
+I2 -> epsilon
+
+`boolean`
+
+BE -> C and BE\
+BE -> C or BE\
+BE -> not BE\
+BE -> C
+
+`comparations`
+
+C -> E == C\
+C -> E != C\
+C -> E <= C\
+C -> E >= C\
+C -> E > C\
+C -> E < C\
+C -> E
+
+`expresions`
+
+E -> E + T\
+E ->E - T\
+E ->T
+
+`terms`
+
+T -> T * F\
+T -> T / F\
+T -> T % F\
+T -> F
+
+`factors`
+
+F -> bool\
+F -> num\
+F -> V\
+F -> *id*\
+F -> *id*.*id*( ARG )\
+F -> *id*[ E ]\
+F -> ( BE )
+F -> direc
+
+`vectors`
+
+V -> ( E, E )
+
+# Tokenizer
+
+Para tokenizar la cadena de entrada se utilizaron expresiones regulares del módulo 
+`re` de Python para hacer match con secciones del texto y trasnformarlas en los Tokens correspondientes. Para crear un Token se utilizó la clase `Token` provista en clase práctica, la cual fue extendida con la información correspondiente a la fila y columna del token para mayor descripción a la hora de detectar errores de parsing.
+
+En una fase previa a tokenizar, se hace un preprocesado del código, en el que se reemplazan los alias de grupos definidos en la sección `groups` por sus valores literales en las instrucciones `line_on`, de modo que el ejemplo de código inicial luego del preprocesado queda de la sigiente forma
+
+``` python
+definitions
+
+    def dos_filas()
+    { ... }
+
+    def <name_of_formation> (<type_of_param> <name_of_param>, ...)
+    { ... }
 
     ...
+
+begin_with <int_value> 
+        
+        line_on <name_of_formation> with [ <int_value> ,<int_value> , ... ] in <vector> heading <direction> args(<param1>, <param2>, ...)
+        line_on <name_of_formation> with [ <int_value> : <int_value> ] in <vector> heading <direction> args(<param1>, <param2>, ...)
+
+        ...
+step 
+        line_on <name_of_formation> with [ <int_value> ,<int_value> , ... ] in <vector> heading <direction> args(<param1>, <param2>, ...)
+        line_on <name_of_formation> with [ <int_value> : <int_value> ] in <vector> heading <direction> args(<param1>, <param2>, ...)
+        
+        ...
+step 
+        ...
+
+...
 
 end
 ```
 
 
-## Gramatica
+# Parser
 
-S -> *definition* D *groups* G *begin_with* *num* R *end* $
+# AST
 
-D -> *def* *identifier* ( P ) { B } D | epsilon
+# Checkeo Semántico y de Tipos
 
-P -> *type* *identifier* P1 | epsilon
-
-P1 -> ,*type* *identifier* P1 | epsilon
-
-B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } *else* B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon
-
-<!-- BExp, IExp, VExp
-B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } *else* B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon -->
-
-A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As  | *type* *identifier* = *from* *identifier* *take* IExp *starting_at* IExp
-
-As -> M | I | *identifier*.*identifier*(ARG) | *identifier*[ IExpr ]
-
-
-BExp ->  *not* BExp | BTerm B2Exp | ( BExp ) B2Exp
-
-B2Exp -> *and* BExp | *or* BExp | epsilon
-
-BTerm -> *identifier* | *true* | *false* | IExp == IExp | V == V | IExp >= IExp | IExp <= IExp | IExp < IExp | IExp > IExp
-
-ELSE -> *else* { B } | epsilon
-
-
-
-IExp -> T X
-
-X -> + IExp X | - IExp X | epsilon
-
-T -> F Y
-
-Y -> * F Y | // F Y | % F Y | epsilon
-
-F -> *num* | ( IExp ) | *identifier*
-
-N -> IExp | epsilon
-
-
-
-VExp -> VT XV
-
-XV -> + VExp XV | - VExp XV | * IExp |  epsilon
-
-VT -> (IExp, IExp) | (VExp) | *identifier* | *dir* N
-
-
-
-R -> *line_up* *identifier* *with* [ ] *in* VExp *heading* *dir* *args* ARG RN
-
-RN -> *step* R | R | epsilon
-
-ARG -> M ARG | ,M ARG | epsilon
-
-M -> BExp | IExp | VExp
-
-G -> *identifier* = I
-
-I -> [*num* I2] | [*num* : *num*]
-
-I2 -> , *num* I2 | epsilon
-
-B -> C and B | C or B | not B | C
-C -> E == C | E != C | E <= C | E >= C | E > C | E < C | E
-E -> E + T | E - T | T
-T -> T * F | T / F | T % F | F
-F -> bool | num | V | id | ( B )
-
-V -> ( E, E )
+# Generación de código Python 
