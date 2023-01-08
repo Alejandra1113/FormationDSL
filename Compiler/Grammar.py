@@ -12,7 +12,7 @@ return_term, continue_term, break_term = Gram.Terminals('return continue break')
 eof = Gram.EOF
 
 
-D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1, BRK = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1 BRK')
+D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1, BRK, ARG1 = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1 BRK ARG1')
 
 
 S = Gram.NonTerminal('S', True)
@@ -67,6 +67,7 @@ AS %= Id + obra + E + cbra, lambda h,s:  GetIndexNode(VariableNode(s[1]), s[2])
 
 ARR %= E + ARR1, lambda h,s: [s[1]] + s[2]
 ARR %= Gram.Epsilon, lambda h, s: []
+
 ARR1 %= comma + E + ARR1, lambda h,s : [s[2]] + s[3] 
 ARR1 %= Gram.Epsilon, lambda h, s: []
 
@@ -79,9 +80,11 @@ RN %= Gram.Epsilon, lambda h, s: ([], [])
 RN %= R, lambda h, s: s[1]
 
 
-ARG %= BE + ARG, lambda h, s: [s[1]] + s[2]
-ARG %= comma + BE + ARG, lambda h, s: [s[2]] + s[3]
-ARG %= Gram.Epsilon, lambda h, s: []
+ARG %= BE + ARG1, lambda h, s: [s[1]] + s[2]
+ARG %= Gram.Epsilon, lambda h,s : [ ]
+
+ARG1 %= comma + BE + ARG1, lambda h, s: [s[2]] + s[3]
+ARG1 %= Gram.Epsilon, lambda h, s: []
 
 
 I %= obra + num + I2 + cbra, lambda h, s: ConstantNode([s[2]] + s[3], "array")
