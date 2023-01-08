@@ -58,7 +58,7 @@ class ArrayDeclarationNode(DeclarationNode):
 
 
 class TypeNode(DeclarationNode):
-    def __init__(self, name) -> None:
+    def __init__(self, name):
         self.name = name
 
 

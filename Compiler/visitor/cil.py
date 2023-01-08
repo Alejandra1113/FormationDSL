@@ -66,7 +66,16 @@ class CilVisitor(object):
             body += inst if type(inst) is list else [inst]  
 
         return FuncDeclarationNode(node.id, params, body)
+    
+    @when(ParamArrayNode)
+    def visit(self, node):
+        ###############################
+        # node.id -> str
+        # node.type -> type
+        ###############################
 
+        return ParamArrayNode(self.set_name(node.idx), node.type)
+    
     @when(ParamNode)
     def visit(self, node):
         ###############################
@@ -122,6 +131,15 @@ class CilVisitor(object):
             inst = self.visit(ex)
             body += inst if type(inst) is list else [inst]  
         return LoopNode(expr, body)
+    
+    @when(DynamicCallNode)
+    def visit(self, node):
+        h = self.visit(node.head)
+        arg = []
+        for a in node.args:
+            arg.append(self.visit(a))
+            
+        return DynamicCallNode(node.lex, h, arg)
     
     @when(CallNode)
     def visit(self, node):
