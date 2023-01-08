@@ -152,7 +152,7 @@ class CilVisitor(object):
         # node.collec = collec
         # node.expr = expr
         # node.dir = dir   
-        name = self.visit(node.collec)
+        name = self.set_name(node.collec)
         temp = f"temp_{len(self.temp_names)}" 
         expr = self.visit(node.expr)
         self.temp_names.append(temp)
