@@ -57,7 +57,7 @@ ELSE %= Gram.Epsilon, lambda h,s: []
 A %= type_id + Id + assign + AS, lambda h, s: VarDeclarationNode(s[2], TypeNode(s[1]), s[4])
 A %= type_id + obra + cbra + Id + assign + AS, lambda h, s: ArrayDeclarationNode(TypeNode(s[1]), s[4], s[6])
 A %= Id + obra + E + cbra + assign + AS, lambda h, s: SetIndexNode(VariableNode(s[1]), s[3], s[6])
-A %= Id + assign + AS, lambda h, s: AssignNode(s[1], s[3])
+A %= Id + assign + AS, lambda h, s: AssignNode(VariableNode(s[1]), s[3])
 A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s: GroupVarDeclarationNode(TypeNode(s[1]), s[2], VariableNode(s[5]), s[9], s[7])
 
 AS %= Id + opar + ARG + cpar, lambda h, s: CallNode(s[1], s[3])

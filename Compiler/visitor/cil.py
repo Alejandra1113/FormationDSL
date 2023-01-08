@@ -99,12 +99,11 @@ class CilVisitor(object):
     def visit(self, node): 
         ###############################
         # node.id = str
-        # node.type1 = str
-        # node.type2 = VarNode
+        # node.type = str
         # node.expr = ExpressionNode
         ###############################   
         expression = self.visit(node.expr)
-        return ArrayDeclarationNode(node.type1, node.type2, self.set_name(node.id), expression)
+        return ArrayDeclarationNode(node.type, self.set_name(node.id), expression)
     
     @when(GroupVarDeclarationNode)
     def visit(self, node):
@@ -209,7 +208,8 @@ class CilVisitor(object):
     @when(AssignNode)  
     def visit(self, node):                
         expr = self.visit(node.expr)
-        name = self.visit(node.from_collec)
+        name = self.visit(node.id)
+        
         return AssignNode(name ,expr)
     
     @when(SetIndexNode)
@@ -317,3 +317,10 @@ class CilVisitor(object):
     @when(LinkNode)
     def visit(self, node):
         return LinkNode(self.visit(node.left), self.visit(node.right), self.visit(node.expr))
+    
+    @when(ArrayNode)
+    def visit(self, node):
+        elems =  [] 
+        for e in node.elements: 
+            elems.append(self.visit(e))
+        return ArrayNode(elems)
