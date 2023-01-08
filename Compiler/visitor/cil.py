@@ -117,8 +117,7 @@ class CilVisitor(object):
         ###############################   
         init = self.visit(node.init)
         lenn = self.visit(node.len)
-        g = self.visit(node.collec)
-        return GroupVarDeclarationNode(node.type, self.set_name(node.id),g, init, lenn)
+        return GroupVarDeclarationNode(node.type, self.set_name(node.id),self.set_name(node.collection), init, lenn)
             
     @when(LoopNode)
     def visit(self, node):
@@ -134,12 +133,11 @@ class CilVisitor(object):
     
     @when(DynamicCallNode)
     def visit(self, node):
-        h = self.visit(node.head)
         arg = []
         for a in node.args:
             arg.append(self.visit(a))
                     
-        return DynamicCallNode(node.lex, h, arg, node.type)
+        return DynamicCallNode(node.lex,self.set_name(node.head), arg, node.type)
     
     @when(CallNode)
     def visit(self, node):
@@ -184,13 +182,10 @@ class CilVisitor(object):
         # node.from_collec = str
         # node.to_collec = str
         # node.init = ExpressionNode
-        # node.len = ExpresionNode
-        
-        fromm = self.visit(node.from_collec)
-        to = self.visit(node.to_collec) 
+        # node.len = ExpresionNode 
         init = self.visit(node.init)
         lenn = self.visit(node.len)
-        return BorrowNode(fromm, to, init, lenn) 
+        return BorrowNode(self.set_name(node.from_collec), self.set_name(node.to_collec), init, lenn) 
     
     
     @when(ConditionNode)  
@@ -209,13 +204,12 @@ class CilVisitor(object):
     @when(AssignNode)  
     def visit(self, node):                
         expr = self.visit(node.expr)
-        name = self.visit(node.id)
         
-        return AssignNode(name ,expr, node.type)
+        return AssignNode(self.set_name(node.id) ,expr, node.type)
     
     @when(SetIndexNode)
     def visit(self, node):                
-        return SetIndexNode(self.visit(node.idx), self.visit(node.index), self.visit(self.expr))
+        return SetIndexNode(self.set_name(node.idx), self.visit(node.index), self.visit(self.expr))
     
                         
     @when(ConstantNode)
