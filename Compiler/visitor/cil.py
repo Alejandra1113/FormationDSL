@@ -1,3 +1,4 @@
+from Compiler.semantic.types import Bool, Int
 import Compiler.utils as util
 from Compiler.semantic.language import *
 from .visitor import *
@@ -159,22 +160,22 @@ class CilVisitor(object):
         self.temp_names.append(temp)
         lines = []
         if node.dir == "prev":
-            lines.append(VarDeclarationNode(name,"int",MinusNode(CallNode("len",[ name] ) ,ConstantNode(1,"int"))))
+            lines.append(VarDeclarationNode(temp,None,MinusNode(CallNode("len",[ name], Int()), ConstantNode(1,Int()), Int())))
             link = LinkNode(
-                            GetIndexNode(name,VariableNode(temp)), 
-                            GetIndexNode(name,MinusNode(VariableNode(temp), ConstantNode(1,"int"))),
+                            GetIndexNode(name,VariableNode(temp, Int())), 
+                            GetIndexNode(name,MinusNode(VariableNode(temp, Int()), ConstantNode(1,Int()))),
                             expr
                             )
             
-            lines.append(LoopNode(GtNode(name,ConstantNode(0,"int")), [link, AssignNode(VariableNode(temp),MinusNode(VariableNode(temp),ConstantNode(1, "int")))]))   
+            lines.append(LoopNode(GtNode(name,ConstantNode(0,Int()), Bool()), [link, AssignNode(temp,MinusNode(VariableNode(temp, Int()),ConstantNode(1, Int()), Int()), Int())]))   
         else:   
-            lines.append(VarDeclarationNode(name,"int",ConstantNode(0, "int")))
+            lines.append(VarDeclarationNode(temp,None,ConstantNode(0, Int())))
             link = LinkNode(
-                            GetIndexNode(name,VariableNode(temp)), 
-                            GetIndexNode(name,PlusNode(VariableNode(temp), ConstantNode(1, "int"))),
+                            GetIndexNode(name,VariableNode(temp, Int())), 
+                            GetIndexNode(name,PlusNode(VariableNode(temp, Int()), ConstantNode(1, Int()))),
                             expr
                             )
-            lines.append(LoopNode(LtNode(name,MinusNode(CallNode("len",[ name] ) ,ConstantNode(1, "int"))), [link, AssignNode(VariableNode(temp),PlusNode(VariableNode(temp),ConstantNode(1, "int")))]))   
+            lines.append(LoopNode(LtNode(name,MinusNode(CallNode("len",[name], Int()) ,ConstantNode(1, Int()), Int()), Bool()), [link, AssignNode(temp,PlusNode(VariableNode(temp, Int()),ConstantNode(1, Int())), Int())]))   
     
         return lines    
 
@@ -316,7 +317,7 @@ class CilVisitor(object):
 
     @when(LinkNode)
     def visit(self, node):
-        return LinkNode(self.visit(node.left), self.visit(node.right), self.visit(node.expr), node.type)
+        return LinkNode(self.visit(node.left), self.visit(node.right), self.visit(node.expr))
     
     @when(ArrayNode)
     def visit(self, node):
