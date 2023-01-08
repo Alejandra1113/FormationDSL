@@ -37,7 +37,7 @@ B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [Borrow
 B %= Id + obra + E + cbra + BE + of + Id + obra + E + cbra + B, lambda h, s: [LinkNode(GetIndexNode(
         VariableNode(s[1]), s[3]), GetIndexNode(VariableNode(s[7]), s[9]), s[5])] + s[11]
 B %= Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[1], s[3])] + s[5]
-B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[3], [VariableNode(s[1])] + s[5])] + s[6]
+B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [DynamicCallNode(s[3], VariableNode(s[1]), s[5])] + s[6]
 B %= Gram.Epsilon, lambda h, s: []
 B %= return_term, lambda h,s: [SpecialNode(s[1])] 
 
@@ -119,7 +119,7 @@ F %= bool_value, lambda h, s: ConstantNode(s[1], "boolean")
 F %= num, lambda h, s: ConstantNode(s[1], "int")
 F %= V, lambda h, s: s[1]
 F %= Id, lambda h, s: VariableNode(s[1])
-F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: CallNode(s[3], [VariableNode(s[1])] + s[5])
+F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: DynamicCallNode(s[3], VariableNode(s[1]), s[5])
 F %= opar + BE + cpar, lambda h, s: s[2]
 F %= direc, lambda h, s: ConstantNode(s[1], "vector")
 
