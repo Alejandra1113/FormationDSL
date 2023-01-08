@@ -61,6 +61,8 @@ A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s:
 AS %= Id + opar + ARG + cpar, lambda h, s: CallNode(s[1], s[3])
 AS %= BE, lambda h, s: s[1]
 AS %= obra + ARR + cbra, lambda h,s:  ArrayNode(s[2])
+AS %= Id + obra + E + cbra, lambda h,s:  GetIndexNode(VariableNode(s[1]), s[2])
+
 
 
 ARR %= E + ARR1, lambda h,s: [s[1]] + s[2]
