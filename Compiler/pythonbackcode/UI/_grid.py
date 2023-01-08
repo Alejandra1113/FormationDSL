@@ -2,9 +2,23 @@ from typing import Union
 import numpy as np
 from pygame import Rect, Surface, Color, image
 from pygame.transform import scale
-from _map_elements import Cell, MountainCell, RiverCell, RoadCell, WallCell, GrassCell, Singleton
+from ._map_elements import Cell, MountainCell, RiverCell, RoadCell, WallCell, GrassCell
 # from entities._units import Fighter, Explorer, Base, Knight, Pikeman
 # from entities.connector import StateMannager
+class Singleton(type):
+    """
+    clase usada para que todas las intancias hagan referencia al mismo objeto
+
+    __instance -> unica instancia de la clase
+    """
+    def __init__(cls, *args, **kwargs):
+        cls.__instance = None
+        type.__init__(cls, *args, **kwargs)
+
+    def __call__(cls, *args, **kwargs):
+        if cls.__instance is None:
+            cls.__instance = type.__call__(cls, *args,**kwargs)
+        return cls.__instance
 
 default = {
     'MountainCell': Color(255, 196, 70),
@@ -47,27 +61,27 @@ class SprintSurface(Surface):
 
 
 class MountainSurface(SprintSurface, metaclass=Singleton):
-    def __init__(self, source: Union[Color, Surface], *args, **kwargs) -> None:
+    def __init__(self, source: Union[Color, Surface], *args, **kwargs):
         return SprintSurface.__init__(self, source, *args, **kwargs)
 
 
 class RiverSurface(SprintSurface, metaclass=Singleton):
-    def __init__(self, source: Union[Color, Surface], *args, **kwargs) -> None:
+    def __init__(self, source: Union[Color, Surface], *args, **kwargs):
         return SprintSurface.__init__(self, source, *args, **kwargs)
 
 
 class RoadSurface(SprintSurface, metaclass=Singleton):
-    def __init__(self, source: Union[Color, Surface], *args, **kwargs) -> None:
+    def __init__(self, source: Union[Color, Surface], *args, **kwargs):
         return SprintSurface.__init__(self, source, *args, **kwargs)
 
 
 class WallSurface(SprintSurface, metaclass=Singleton):
-    def __init__(self, source: Union[Color, Surface], *args, **kwargs) -> None:
+    def __init__(self, source: Union[Color, Surface], *args, **kwargs):
         return SprintSurface.__init__(self, source, *args, **kwargs)
 
 
 class GrassSurface(SprintSurface, metaclass=Singleton):
-    def __init__(self, source: Union[Color, Surface], *args, **kwargs) -> None:
+    def __init__(self, source: Union[Color, Surface], *args, **kwargs):
         return SprintSurface.__init__(self, source, *args, **kwargs)
 
 

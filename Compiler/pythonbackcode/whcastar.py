@@ -51,9 +51,9 @@ class FindVertex(ViewProblem):
                                     if validMove(x + move[0], y + move[1], self.dim_x, self.dim_y)]
 
 class FindWithAgent(FindVertex):
-    def __init__(self, reservation_table: dict, *args, **kwargs):
+    def __init__(self, reservation_table: dict, heigth, width, *args, **kwargs):
         self.reservation_table = reservation_table
-        FindVertex.__init__(self, *args, **kwargs)
+        FindVertex.__init__(self, heigth, width,*args, **kwargs)
 
     def actions(self, state):
         poss, time = state
@@ -228,7 +228,7 @@ def whcastar_search(connectors,starts:list[tuple] ,goals: list[tuple], rrastar_l
         reservation_table[(start, 0)] = connectors[i]
     paths = {}
     for i in range(len(goals)):
-        start, target = goals[i]
+        start, target = starts[i], goals[i]
         rrastar_instance = rrastar_list[i]
         path = start_whcastar_search(reservation_table=reservation_table, heigth= heigth,width= width, rrastar_instance=rrastar_instance, start=start, target=target, w=w)
         paths[connectors[i]] = path
