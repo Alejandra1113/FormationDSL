@@ -2,7 +2,7 @@ import sys
 import time
 import numpy as np
 import pygame as pg
-from ._map_elements import *
+from ._map_elements import Cell, MountainCell, RiverCell, RoadCell, WallCell, GrassCell
 
 # from entities import Cell
 from typing import Iterable
@@ -27,7 +27,7 @@ class Render:
         self.__screen = pg.display.set_mode(size=(width, height))
         self.map = map if map is not None else get_grid(width, height)
         self.index = 0
-        self.condition = condition(self.index)
+        self.condition = condition
         # self.last_state = StateMannager(self.map, agents)
         
         self.__max_shape_size = max(self.map.shape[1], self.map.shape[0])
@@ -51,22 +51,24 @@ class Render:
     #                 sys.exit()
     #         yield self.last_state.exec_round()  # new state
 
-    def start(self, time: int = 1000):
+    def start(self, time: int = 1):
         """
         start se encarga de recorrer la simulación hasta el final después de que pygame haya iniciado
 
         time -> cantidad de frames por segundo
         """
         clock = pg.time.Clock()
-        last =  [Cell(i[self.index]) for i in self.path]
-        current = [Cell(i[self.index + 1 ]) for i in self.path]    
-        for i in current: 
-            last[i].unit = None 
-            current[i].unit = i
-        current += last
-        self.update(current)
-        self.first_time = False
-        clock.tick(time)
+        while self.condition(self.index):
+            last =  [GrassCell(i[self.index -1][0], 1) for i in self.path]
+            current = [GrassCell(i[self.index][0], 1) for i in self.path]    
+            for i in range(len(current)): 
+                last[i].unit = None 
+                current[i].unit = i
+            last += current
+            self.update(last)
+            self.index +=1
+            self.first_time = False
+            clock.tick(time)
 
     def update(self, state: list[Cell]):
         """

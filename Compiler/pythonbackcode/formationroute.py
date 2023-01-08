@@ -37,10 +37,10 @@ def get_formation_route(step_positions : list(list((int,int)))):
         paths = whcastar_search(ids, origin, destiny, rrastar_list, heigth, width, 16, None)
         if all([p[-1][0] == destiny[i] for i, p in paths.items()]) :
             current_step += 1
-            if current_step >= len(step_positions[0]):               
+            if current_step < len(step_positions[0]):               
                 rrastar_list = np.ndarray(shape=len(step_positions), dtype=RRAstar)
                 origin = destiny
-                destiny = [i for i in step_positions[current_step]]
+                destiny = [i[current_step] for i in step_positions]
             
         for i in range(len(step_positions)) :
             path[i] += paths[i]
@@ -51,6 +51,6 @@ pg.init()
 
 table, path = get_formation_route(step)
 table = examples.paint.get_example_grid(table)
-condition = lambda x: x < len(path[0]) - 1
-render = Render(lambda:condition, table, path , width=1400, height=800)
+condition = lambda x: x < len(path[0])
+render = Render(lambda x :condition(x), table, path , width=1400, height=800)
 render.start()
