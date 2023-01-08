@@ -30,8 +30,8 @@ P1 %= comma + type_id + Id + P1, lambda h, s: [ParamNode(s[3], s[2])] + s[4]
 P1 %= Gram.Epsilon, lambda h, s: []
 
 B %= A + B, lambda h, s: [s[1]] + s[2]
-B %= wloop + opar + BE + cpar + ocbra + B + BRK + ccbra + B, lambda h, s: [LoopNode(s[3], s[6])] + s[8]
-B %= condif + opar + BE + cpar + ocbra + B + BRK + ccbra + ELSE + B, lambda h, s: [ConditionNode(s[3], s[6])] + s[8] + s[9]
+B %= wloop + opar + BE + cpar + ocbra + B + BRK + ccbra + B, lambda h, s: [LoopNode(s[3], s[6] + s[7])] + s[9]
+B %= condif + opar + BE + cpar + ocbra + B + BRK + ccbra + ELSE + B, lambda h, s: [ConditionNode(s[3], s[6] + s[7])] + s[9] + s[10]
 B %= iter_aof + Id + at + BE + of + rpos + B, lambda h, s: [IterNode(s[2], s[4], s[6])] + s[7]
 B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [BorrowNode(s[2], s[8], s[4], s[5])] + s[9]
 B %= Id + obra + E + cbra + BE + of + Id + obra + E + cbra + B, lambda h, s: [LinkNode(GetIndexNode( s[1], s[3]), GetIndexNode(s[7], s[9]), s[5])] + s[11]
@@ -42,13 +42,13 @@ B %= return_term, lambda h,s: [SpecialNode(s[1])]
 
 
 # BRK %= B + BRK, lambda h,s: s[1] + s[2] 
-BRK %= break_term, lambda h,s: [SpecialNode(s[1])]  + s[2] 
-BRK %= continue_term, lambda h,s: [SpecialNode(s[1])]  + s[2]  
+BRK %= break_term, lambda h,s: [SpecialNode(s[1])] 
+BRK %= continue_term, lambda h,s: [SpecialNode(s[1])]  
 BRK %= Gram.Epsilon, lambda h,s: [] 
 
 
 
-ELSE %= condelse + ocbra + B + BRK + ccbra, lambda h,s: [ConditionNode(None, s[3])]
+ELSE %= condelse + ocbra + B + BRK + ccbra, lambda h,s: [ConditionNode(None, s[3] + s[4])]
 ELSE %= Gram.Epsilon, lambda h,s: []
 
 A %= type_id + Id + assign + AS, lambda h, s: VarDeclarationNode(s[2], s[1], s[4])
