@@ -72,21 +72,14 @@ class BorrowNode(StatementNode):
 
 
 class ConditionNode(StatementNode):
-    def __init__(self, expr, body1, body2):
+    def __init__(self, expr, body):
         self.expr = expr
-        self.body1 = body1
-        self.body2 = body2
+        self.body = body
 
 
 class AtomicNode(ExpressionNode):
     def __init__(self, lex):
         self.lex = lex
-
-
-class TypeNode(AtomicNode):
-    def __init__(self, type, lex):
-        AtomicNode.__init__(self, lex)
-        self.type = type
 
 
 class UnaryNode(ExpressionNode):
@@ -111,21 +104,22 @@ class VariableNode(AtomicNode):
     pass
 
 
+class ConstantNode(AtomicNode):
+    pass
+
+
 class CallNode(AtomicNode):
     def __init__(self, idx, args):
         AtomicNode.__init__(self, idx)
         self.args = args
 
 
-class BeginCallNode(CallNode):
+class BeginCallNode(AtomicNode):
     def __init__(self, idx, poss, rot, args):
-        CallNode.__init__(self, idx, args)
+        AtomicNode.__init__(self, idx)
+        self.args = args
         self.poss = poss
         self.rot = rot
-
-
-class ConstantNode(TypeNode):
-    pass
 
 
 class NotNode(UnaryNode):
