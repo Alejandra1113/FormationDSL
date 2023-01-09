@@ -3,6 +3,15 @@
 __all__ = ['Context', 'ProgramContext', 'OtherContext']
 
 
+def check_params(params_1, params_2):
+    if len(params_1) != len(params_2):
+        return False
+    for get_arg, set_arg in zip(params_1, params_2):
+        if set_arg.type != get_arg.type:
+            return False
+    return True
+
+
 class VariableInfo:
     def __init__(self, name):
         self.name = name
@@ -34,7 +43,7 @@ class ProgramContext(Context):
         self.local_funcs: list[FunctionInfo] = []
 
     def define_function(self, fname, params):
-        if not self.is_local_func(fname, len(params)):
+        if not self.is_local_func(fname, params):
             func = FunctionInfo(fname, params)
             self.local_funcs.append(func)
             return func
@@ -47,7 +56,7 @@ class ProgramContext(Context):
 
     def get_local_function_info(self, fname, params):
         for info in self.local_funcs:
-            if info.name == fname and len(info.params) == params:
+            if info.name == fname and check_params(info.params, params):
                 return info
         return None
 

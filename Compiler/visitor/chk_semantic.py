@@ -1,3 +1,4 @@
+import Compiler.utils as util
 from Compiler.semantic import *
 from .visitor import *
 from ._def import *
@@ -21,8 +22,8 @@ class SemanticCheckerVisitor(object):
         errors = []
         for i, child in enumerate(node.functions):
             child_err = self.visit(child, context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
+
         return errors
 
     # @when(BeginWithNode)
@@ -35,8 +36,7 @@ class SemanticCheckerVisitor(object):
         errors = new_context or []
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors if len(errors) else None
 
     @when(VarDeclarationNode)
@@ -47,8 +47,7 @@ class SemanticCheckerVisitor(object):
         else:
             context.define_variable(node.idx)
         expr_err = self.visit(node.expr, context, index)
-        if expr_err:
-            errors += expr_err
+        util.update_errs(errors, expr_err)
         return errors if len(errors) else None
 
     @when(GroupVarDeclarationNode)
@@ -59,14 +58,13 @@ class SemanticCheckerVisitor(object):
         else:
             context.define_variable(node.id)
         collec_err = self.visit(node.collec, context, index)
-        if collec_err:
-            errors += collec_err
+        util.update_errs(errors, collec_err)
+
         init_err = self.visit(node.init, context, index)
-        if init_err:
-            errors += init_err
+        util.update_errs(errors, init_err)
+
         len_err = self.visit(node.len, context, index)
-        if len_err:
-            errors += len_err
+        util.update_errs(errors, len_err)
         return errors if len(errors) else None
 
     @when(LoopNode)
@@ -76,36 +74,33 @@ class SemanticCheckerVisitor(object):
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors if len(errors) else None
 
     @when(IterNode)
     def visit(self, node: IterNode, context: OtherContext, index: int = 0):
         errors = []
         collec_err = self.visit(node.collec, context, index)
-        if collec_err:
-            errors += collec_err
+        util.update_errs(errors, collec_err)
+
         expr_err = self.visit(node.expr, context, index)
-        if expr_err:
-            errors += expr_err
+        util.update_errs(errors, expr_err)
         return errors if len(errors) else None
 
     @when(BorrowNode)
     def visit(self, node: BorrowNode, context: OtherContext, index: int = 0):
         errors = []
         from_collec_err = self.visit(node.from_collec, context, index)
-        if from_collec_err:
-            errors += from_collec_err
+        util.update_errs(errors, from_collec_err)
+
         to_collec_err = self.visit(node.to_collec, context, index)
-        if to_collec_err:
-            errors += to_collec_err
+        util.update_errs(errors, to_collec_err)
+
         init_err = self.visit(node.init, context, index)
-        if init_err:
-            errors += init_err
+        util.update_errs(errors, init_err)
+
         len_err = self.visit(node.len, context, index)
-        if len_err:
-            errors += len_err
+        util.update_errs(errors, len_err)
         return errors if len(errors) else None
 
     @when(ConditionNode)
@@ -116,8 +111,7 @@ class SemanticCheckerVisitor(object):
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors if len(errors) else None
 
     @when(ConstantNode)
@@ -138,8 +132,7 @@ class SemanticCheckerVisitor(object):
                 f"funcion {node.lex} no esta definida con {len(node.args)} argumentos")
         for arg in node.args:
             arg_err = self.visit(arg, context, index)
-            if arg:
-                errors += arg_err
+            util.update_errs(errors, arg_err)
         return errors if len(errors) else None
 
     @when(BeginCallNode)
@@ -150,14 +143,13 @@ class SemanticCheckerVisitor(object):
                 f"funcion {node.lex} no esta definida con {len(node.args)} argumentos")
         for arg in node.args:
             arg_err = self.visit(arg, context, index)
-            if arg:
-                errors += arg_err
+            util.update_errs(errors, arg_err)
+
         poss_err = self.visit(node.poss, context, index)
-        if poss_err:
-            errors += poss_err
+        util.update_errs(errors, poss_err)
+
         rot_err = self.visit(node.rot, context, index)
-        if rot_err:
-            errors += rot_err
+        util.update_errs(errors, rot_err)
         return errors if len(errors) else None
 
     @when(UnaryNode)
@@ -168,23 +160,21 @@ class SemanticCheckerVisitor(object):
     def visit(self, node: BinaryNode, context: OtherContext, index: int = 0):
         errors = []
         left_err = self.visit(node.left, context, index)
-        if left_err:
-            errors += left_err
+        util.update_errs(errors, left_err)
+
         right_err = self.visit(node.right, context, index)
-        if right_err:
-            errors += right_err
+        util.update_errs(errors, right_err)
         return errors if len(errors) else None
 
     @when(TernaryNode)
     def visit(self, node: TernaryNode, context: OtherContext, index: int = 0):
         errors = []
         left_err = self.visit(node.left, context, index)
-        if left_err:
-            errors += left_err
+        util.update_errs(errors, left_err)
+
         expr_err = self.visit(node.expr, context, index)
-        if expr_err:
-            errors += expr_err
+        util.update_errs(errors, expr_err)
+
         right_err = self.visit(node.right, context, index)
-        if right_err:
-            errors += right_err
+        util.update_errs(errors, right_err)
         return errors if len(errors) else None
