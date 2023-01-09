@@ -41,7 +41,7 @@
 
 ## Apariencia del script
 
-```
+``` python
 definitions
 
     def <name_of_formation> (<type_of_param> <name_of_param>, ...)

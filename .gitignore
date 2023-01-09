@@ -12,6 +12,9 @@
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
+cmp
+visitor
+cp12.*
 
 # Mono auto generated files
 mono_crash.*
