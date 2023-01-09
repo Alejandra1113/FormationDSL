@@ -68,3 +68,61 @@ begin
 
 end
 ```
+
+
+## Gramatica
+
+S -> *definition* D *groups* G *begin_with* *num* R *end* $
+
+D -> *def* *identifier* ( P ) { B } D | epsilon
+
+P -> *type* *identifier* P1 | epsilon
+
+P1 -> ,*type* *identifier* P1 | epsilon
+
+B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } ELSE B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon
+
+A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As | *type* *identifier* = I | *type* *identifier* = *from* *identifier* *take* IExp *starting_at* IExp
+
+As -> M | I | *identifier*.*identifier*(ARG) | *identifier*[ IExpr ]
+
+BExp ->  *not* BExp | BTerm B2Exp | ( BExp ) B2Exp
+
+B2Exp -> *and* BExp | *or* BExp | epsilon
+
+BTerm -> *identifier* | *true* | *false* | IExp == IExp | V == V | IExp >= IExp | IExp <= IExp | IExp < IExp | IExp > IExp
+
+ELSE -> *else* { B } | epsilon
+
+IExp -> T X
+
+X -> + IExp X | - IExp X | epsilon
+
+T -> F Y
+
+Y -> * F Y | // F Y | % F Y | epsilon
+
+F -> *num* | ( IExp ) | *identifier*
+
+N -> IExp | epsilon
+
+VExp -> VT XV
+
+XV -> + VExp XV | - VExp XV | * IExp |  epsilon
+
+VT -> (IExp, IExp) | (VExp) | *identifier* | *dir* N
+
+R -> *line_up* *identifier* *with* [ ] *in* VExp *heading* *dir* *args* ARG RN
+
+RN -> *step* R | R | epsilon
+
+ARG -> M ARG | ,M ARG | epsilon
+
+M -> BExp | IExp | VExp
+
+G -> *identifier* = I
+
+I -> [*num* I2] | [*num* : *num*]
+
+I2 -> , *num* I2 | epsilon
+
