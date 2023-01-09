@@ -164,3 +164,11 @@ def tokenizer(G, fixed_tokens):
         else:
             raise TypeError('Argument must be "str" or a callable object.')
     return decorate
+
+def update_err_type(errors, set_type, get_type):
+    if set_type != get_type:
+        errors.append(f"error de tipo, esta tratando de guardar un {get_type} en {set_type}")
+
+def update_errs(errors, new_errs):
+    if new_errs:
+        errors += new_errs

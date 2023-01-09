@@ -1,3 +1,4 @@
+import Compiler.utils as util
 from Compiler.semantic import *
 from .visitor import *
 from ._def import *
@@ -22,18 +23,11 @@ class ScopeCheckerVisitor(object):
         errors = []
         for i, child in enumerate(node.functions):
             child_err = self.visit(child, context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors
 
     # @when(BeginWithNode)
-    # def visit(self, node: BeginWithNode, context: OtherContext, index: int = 0):
-    #     errors = []
-    #     if node.num <= 0:
-    #         errors.append(f"begin num {node.id} debe ser positivo")
-    #     for child in node.expressions:
-    #         errors += self.visit(child, context, index)
-    #     return errors
+    #    pass
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
@@ -45,8 +39,7 @@ class ScopeCheckerVisitor(object):
         new_context = context.create_child_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors
 
     @when(VarDeclarationNode)
@@ -63,8 +56,7 @@ class ScopeCheckerVisitor(object):
         new_context = context.create_child_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors
 
     @when(IterNode)
@@ -81,8 +73,7 @@ class ScopeCheckerVisitor(object):
         new_context = context.create_child_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
-            if child_err:
-                errors += child_err
+            util.update_errs(errors, child_err)
         return errors
 
     @when(ConstantNode)
