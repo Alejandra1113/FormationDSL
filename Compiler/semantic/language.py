@@ -14,16 +14,13 @@ class DefinitionsNode(Node):
 
 
 class BeginWithNode(Node):
-    def __init__(self, num, expressions):
+    def __init__(self, num, step):
         self.num = num
-        self.expressions = expressions
+        self.step = step
 
 
-class FuncDeclarationNode(Node):
-    def __init__(self, idx, params, body):
-        self.id = idx
-        self.params = params
-        self.body = body
+class DeclarationNode(Node):
+    pass
 
 
 class StatementNode(Node):
@@ -34,14 +31,27 @@ class ExpressionNode(Node):
     pass
 
 
-class VarDeclarationNode(StatementNode):
-    def __init__(self, type, idx, expr):
-        self.type = type
+class FuncDeclarationNode(DeclarationNode):
+    def __init__(self, idx, params, params_types, body):
         self.id = idx
+        self.params = params
+        self.params_types = params_types
+        self.body = body
+
+
+class StepNode(DeclarationNode):
+    def __init__(self, instructions):
+        self.instructions = instructions
+
+
+class VarDeclarationNode(DeclarationNode):
+    def __init__(self, idx, type, expr):
+        self.id = idx
+        self.type = type
         self.expr = expr
 
 
-class GroupVarDeclarationNode(StatementNode):
+class GroupVarDeclarationNode(DeclarationNode):
     def __init__(self, type, idx, collec, init, len):
         self.type = type
         self.id = idx
@@ -77,6 +87,20 @@ class ConditionNode(StatementNode):
         self.body = body
 
 
+class GetIndexNode(ExpressionNode):
+    pass
+
+
+class SetIndexNode(ExpressionNode):
+    pass
+
+
+class AssignNode(ExpressionNode):
+    def __init__(self, idx, expr):
+        self.id = idx
+        self.expr = expr
+
+
 class AtomicNode(ExpressionNode):
     def __init__(self, lex):
         self.lex = lex
@@ -100,11 +124,15 @@ class TernaryNode(ExpressionNode):
         self.expr = expr
 
 
+class ConstantNode(AtomicNode):
+    pass
+
+
 class VariableNode(AtomicNode):
     pass
 
 
-class ConstantNode(AtomicNode):
+class InstantiateNode(AtomicNode):
     pass
 
 

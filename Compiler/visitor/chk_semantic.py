@@ -1,5 +1,5 @@
 import Compiler.utils as util
-from Compiler.semantic import *
+from Compiler.semantic.language import *
 from .visitor import *
 from ._def import *
 

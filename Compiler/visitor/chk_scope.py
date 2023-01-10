@@ -1,5 +1,5 @@
 import Compiler.utils as util
-from Compiler.semantic import *
+from Compiler.semantic.language import *
 from .visitor import *
 from ._def import *
 
@@ -15,8 +15,8 @@ class ScopeCheckerVisitor(object):
     def visit(self, node: ProgramNode, context: ProgramContext = None, index: int = 0):
         context = context or ProgramContext()
         def_error = self.visit(node.definitions, context, index)
-        # begin_error = self.visit(node.begin_with, context, index)
-        return def_error  # + begin_error
+        begin_error = self.visit(node.begin_with, context, index)
+        return def_error  + begin_error
 
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
@@ -26,8 +26,9 @@ class ScopeCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return errors
 
-    # @when(BeginWithNode)
-    #    pass
+    @when(BeginWithNode)
+    def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
+        return []
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):

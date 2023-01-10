@@ -3,6 +3,12 @@
 __all__ = ['Context', 'ProgramContext', 'OtherContext']
 
 
+class SemanticError(Exception):
+    @property
+    def text(self):
+        return self.args[0]
+
+
 def check_params(params_1, params_2):
     if len(params_1) != len(params_2):
         return False
@@ -13,14 +19,16 @@ def check_params(params_1, params_2):
 
 
 class VariableInfo:
-    def __init__(self, name):
+    def __init__(self, name, type):
         self.name = name
+        self.type = type
 
 
 class FunctionInfo:
-    def __init__(self, name, params):
+    def __init__(self, name, params, params_types):
         self.name = name
         self.params = params
+        self.params_types = params_types
 
 
 class Context:
