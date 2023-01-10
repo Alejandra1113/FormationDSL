@@ -36,7 +36,7 @@ class Token:
 
 variable_tokens = {  
   'num'              :  (num,              r'(?:\d+)'),                                                                                       # Numbers      
-  'bool_value'       :  (bool_value,       r'(?:true)|(?:false)'),                                                                        # Bool Values          
+  'bool_value'       :  (bool_value,       r'(?:true )|(?:false )'),                                                                        # Bool Values          
   'type_id'          :  (type_id,          r'(?:int)|(?:bool)|(?:group)|(?:array)|(?:vector)'),                                           # Type Identifiers                
   'rpos'             :  (rpos,             r'(?:next)|(?:prev)'),                                                                         # Relative Position          
   'direc'            :  (direc,            r'(?:up_right)|(?:down_right)|(?:down_left)|(?:up_left)|(?:up)|(?:right)|(?:down)|(?:left)'),  # Directions       
@@ -129,8 +129,24 @@ def tokenize(code,keywords,variable_tokens):
                 value = True
             else:
                 value = False
-                
-
+        elif kind == 'direc':
+            kind = direc
+            if(value == 'up_right'):
+                value = (-1,1)
+            elif(value == 'right'):
+                value = (0,1)
+            elif(value == 'down_right'):
+                value = (1,1)
+            elif(value == 'down'):
+                value = (1,0)
+            elif(value == 'down_left'):
+                value = (1,-1)
+            elif(value == 'left'):
+                value = (0,-1)
+            elif(value == 'up_left'):
+                value = (-1,-1)
+            elif(value == 'up'):
+                value = (-1,0)
         elif kind == 'Id' or kind == 'one_no_word' or kind == 'two_no_word':
             try:
                 kind = keywords[value]
@@ -170,14 +186,14 @@ def dos_filas(){
         }
         if( i > 0)
         {
-            G[temp + i - 1] left of G.[temp + 1]
+            G[temp + i - 1] left of G[temp + 1]
         }
     }
 }
 
 def dos_columnas()
 {
-    group prim = from G take G.len//2 starting_at 0
+    group prim = from G take G.len()//2 starting_at 0
     all_of prim at down of prev
     all_of G at down of prev
     prim[0] left of G[0]
