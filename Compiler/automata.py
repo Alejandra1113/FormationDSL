@@ -285,7 +285,8 @@ def expand(item, firsts, seen = None):
     prev = item.Preview()
 
     for preview in prev:
-        lookaheads.extend(firsts[preview[0]])
+        local_first = compute_local_first(firsts, preview)
+        lookaheads.extend(local_first)
         
     # Your code here!!! (Compute lookahead for child items)
     
@@ -324,7 +325,7 @@ def closure_lr1(items, firsts):
         new_items = ContainerSet()
         
         for itm in closure:
-            new_items.extend(expand(itm,firsts) )
+            new_items.extend(expand(itm,firsts))
         
         changed = closure.update(new_items)
         
@@ -333,7 +334,7 @@ def closure_lr1(items, firsts):
 def goto_lr1(items, symbol, firsts=None, just_kernel=False):
     assert just_kernel or firsts is not None, '`firsts` must be provided if `just_kernel=False`'
     items = frozenset(item.NextItem() for item in items if item.NextSymbol == symbol)
-    return items if just_kernel else closure_lr1(items, firsts)
+    return items if just_kernel else closure_lr1(items, firsts,)
 
 def build_LR1_automaton(G):
     assert len(G.startSymbol.productions) == 1, 'Grammar must be augmented'
