@@ -11,79 +11,58 @@ num, Id, bool_value, type_id, rpos, direc = Gram.Terminals('num Id bool_value ty
 eof = Gram.EOF
 
 
-D, P, P1, B, A, AS, BEXP, B2EXP, BTERM, ELSE, IEXP, X, T, Y, F, N, VEXP, XV, VT, R, RN, ARG, M, G, I, I2 = Gram.NonTerminals('D P P1 B A AS BEXP B2EXP BTERM ELSE IEXP X T Y F N VEXP XV VT R RN ARG M G I I2')
+D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V')
+
 
 S = Gram.NonTerminal('S',True)
 
-S %= definition + D + groups + G + begin_with + num + R + end, lambda h, s: ProgramNode(s[1], s[6])
+S %= definition + D + groups + G + begin_with + num + R + end, lambda h, s: ProgramNode(s[1], BeginWithNode(s[5],s[6][1]))
 
-D %= deff + Id + opar + P + cpar + ocbra + B + ccbra + D, lambda h, s: [DefinitionsNode(s[0])] + s[8] | Gram.Epsilon
+D %= deff + Id + opar + P + cpar + ocbra + B + ccbra + D, lambda h, s: [DefinitionsNode(s[0])] + s[8] | Gram.Epsilon, lambda h,s: [ ]
 
-P %= type_id + Id + P1, lambda h,s: [ParamNode(s[1],s[0])] + s[2] | Gram.Epsilon
+P %= type_id + Id + P1, lambda h,s: [ParamNode(s[1],s[0])] + s[2] | Gram.Epsilon, lambda h,s : [ ]
 
-P1 %=  comma + type_id + Id + P1, lambda h,s: [ParamNode(s[2],s[1])] + s[3] | Gram.Epsilon 
+P1 %=  comma + type_id + Id + P1, lambda h,s: [ParamNode(s[2],s[1])] + s[3] | Gram.Epsilon, lambda h,s : [ ]
 
-B %= A + B, lambda h,s: [s[0]] + s[1] | wloop + opar + BEXP + cpar + ocbra + B + ccbra + B, lambda h,s: [LoopNode(s[2], s[5])] + s[6] 
-B %= condif + opar + BEXP + cpar + ocbra + B + ccbra + ELSE + B, lambda h,s: [ConditionNode(s[2], s[5])] + [] + s[8]  
-B %= iter_aof + Id + at + VEXP + of + rpos + B, lambda h,s: [IterNode(s[1],s[3],s[5])] + s[6] 
-B %= from_op + Id + borrow + IEXP + st_at + IEXP + to + Id + B, lambda h,s: [BorrowNode(s[1], s[7], s[3], s[4])] + s[8] 
-B %= Id + obra + IEXP + cbra + VEXP + of + Id + obra + IEXP + cbra + B | Id + opar + ARG + cpar + B, lambda h,s: [CallNode(s[0], s[2])] + s[4] 
+B %= A + B, lambda h,s: [s[0]] + s[1] | wloop + opar + BE + cpar + ocbra + B + ccbra + B, lambda h,s: [LoopNode(s[2], s[5])] + s[6] 
+B %= condif + opar + BE + cpar + ocbra + B + ccbra + ELSE + B, lambda h,s: [ConditionNode(s[2], s[5])] + [] + s[8]  
+B %= iter_aof + Id + at + BE + of + rpos + B, lambda h,s: [IterNode(s[1],s[3],s[5])] + s[6] 
+B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h,s: [BorrowNode(s[1], s[7], s[3], s[4])] + s[8] 
+B %= Id + obra + BE + cbra + BE + of + Id + obra + BE + cbra + B, lambda h,s: [LinkNode( GetIndexNode(s[0], s[2]), GetIndexNode(s[6],s[8]), s[4])] + s[10] 
+B %= Id + opar + ARG + cpar + B, lambda h,s: [CallNode(s[0], s[2])] + s[4] 
 B %= Id + dot + Id + opar + ARG + cpar + B, lambda h,s: [CallNode( s[2], [s[0]] + s[4])] + s[5] | Gram.Epsilon, lambda h,s: [ ] 
 
 
-A %= type_id + Id + assign + AS | Id + obra + IEXP + cbra + assign + AS | Id + assign + AS | type_id + Id + assign + from_op + Id + take + IEXP + st_at + IEXP
-A %= type_id + Id + assign + AS | Id + obra + IEXP + cbra + assign + AS | Id + assign + AS | type_id + Id + assign + from_op + Id + take + IEXP + st_at + IEXP
+A %= type_id + Id + assign + AS, lambda h,s: VarDeclarationNode(s[1],s[0],s[3]) | Id + obra + BE + cbra + assign + AS, lambda h,s: SetIndexNode(s[0],s[2],s[5]) 
+A %= Id + assign + AS, lambda h, s: AssignNode(s[0], s[2]) | type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h,s: GroupVarDeclarationNode(s[0], s[1], s[4],s[8], s[6])
 
-AS %= Id + dot + Id + opar + ARG + cpar  | Id + obra + IEXP + cbra | I | M 
-
-
-
-BEXP %= notop + BEXP, lambda h,s: NotNode(s[1]) | BTERM + B2EXP | opar + BEXP + cpar + B2EXP
-
-B2EXP %= andop + BEXP | orop + BEXP | Gram.Epsilon
-
-BTERM %=  IEXP + eq + IEXP | VEXP + eq + VEXP | IEXP + gte + IEXP | IEXP + lte + IEXP | IEXP + lt + IEXP | IEXP + gt + IEXP | bool_value | Id
-
-ELSE %= condelse + ocbra + B + ccbra | Gram.Epsilon
-
-IEXP %= T + X
-
-X %= plus + IEXP + X | minus + IEXP + X | Gram.Epsilon
-
-T %= F + Y
-
-Y %= F + Y | div + F + Y | rem + F + Y | Gram.Epsilon
-
-F %= opar + IEXP + cpar | Id | num
-
-N %= IEXP | Gram.Epsilon
-
-VEXP %= VT + XV
-
-XV %= plus + VEXP + XV | minus + VEXP + XV | IEXP | Gram.Epsilon
-
-VT %= opar + IEXP + comma + IEXP + cpar | opar + VEXP + cpar  | direc + N | Id
+AS %= Id + dot + Id + opar + ARG + cpar, lambda h,s: CallNode( s[2], [s[0]] + s[4])  | Id + obra + BE + cbra, lambda h,s: CallNode(s[0], s[2]) | I, lambda h,s: s[0] | BE, lambda h,s: s[0] 
 
 
+R %= lineup + Id + with_op + I + in_op + BE + heading + direc + args + ARG + RN, lambda h,s: ([BeginCallNode(s[1], s[5], s[7], [s[3]]+s[9])], s[10][1]) if not s[10][0] else ([BeginCallNode(s[1], s[5], s[7], [s[3]]+s[9])]+ s[10][0], s[10][1])
 
-R %= lineup + Id + with_op + I + in_op + VEXP + heading + direc + args + ARG + RN, lambda h,s: CallNode(s[1], [s[3],s[5],s[7]]+ s[10])
+RN %= step + R,  lambda h,s: (None, [StepNode(s[1][0])] + s[1][1]) | Gram.Epsilon, lambda h,s: ([], []) | R, lambda h,s: s[0] 
 
-RN %= step + R  | Gram.Epsilon | R
 
-ARG %= M + ARG, lambda h,s: [s[0]] + s[1] |  comma + M + ARG,  lambda h,s: [s[1]] + s[2]| Gram.Epsilon, lambda h,s : []
+ARG %= BE + ARG, lambda h,s: [s[0]] + s[1] |  comma + BE + ARG,  lambda h,s: [s[1]] + s[2]| Gram.Epsilon, lambda h,s : []
 
-M %= BEXP | IEXP | VEXP
+G %= Id + assign + I, lambda h,s: AssignNode(s[0], s[2]) 
 
-G %= Id + assign + I
+I %=  obra + num + I2 + cbra, lambda h,s:ArrayNode([s[1]] + s[2])  |  obra + num + two_points + num + cbra, lambda h,s: SliceNode(s[1],s[3])  
 
-I %=  obra + num + I2 + cbra  |  obra + num + two_points + num + cbra 
+I2 %=  comma + num + I2, lambda h,s: [s[1]] + s[2] | Gram.Epsilon, lambda h,s: [ ]
 
-I2 %=  comma + num + I2 | Gram.Epsilon
 
-# B -> C and B | C or B | not B | C
-# C -> E == C | E != C | E <= C | E >= C | E > C | E < C | E
-# E -> E + T | E - T | T
-# T -> T * F | T / F | T % F | F
-# F -> bool | num | V | id | ( B )
+BE %=  C + andop + BE, lambda h,s: AndNode(s[0],s[2]) | C + orop + BE, lambda h,s: OrNode(s[0],s[2]) 
+BE %= notop + BE , lambda h,s: NotNode(s[1])| C, lambda h,s: s[0]
 
-# V -> ( E, E )
+C %= E + eq + C, lambda h,s: EqNode(s[0],s[2]) | E + lte + C, lambda h,s: EqlNode(s[0],s[2]) | E + gte + C, lambda h,s: EqgNode(s[0],s[2]) 
+C %= E + gt + C, lambda h,s: GtNode(s[0],s[2]) | E + lt + C, lambda h,s: LtNode(s[0],s[2]) | E, lambda h,s: s[0]
+
+E %=  E + plus + T, lambda h,s: PlusNode(s[0],s[2]) | E + minus + T, lambda h,s: MinusNode(s[0],s[2]) | T, lambda h,s: s[0]
+
+T %=  T + star + F, lambda h,s: StarNode(s[0],s[2]) | T + div + F, lambda h,s: DivNode(s[0],s[2]) | T + rem + F, lambda h,s: ModNode(s[0],s[2]) | F, lambda h,s: s[0]
+
+F %=  bool_value, lambda h,s: AtomicNode(s[0]) | num, lambda h,s: AtomicNode(s[0]) | V, lambda h,s: s[0] | Id, lambda h,s: AtomicNode(s[0]) | opar + BE + cpar | direc, lambda h,s: s[1]
+
+V %=  opar + E + comma + E + cpar, lambda h,s: VectNode(s[1], s[3])
