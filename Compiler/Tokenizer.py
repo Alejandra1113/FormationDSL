@@ -169,8 +169,16 @@ def tokenize(code,keywords,variable_tokens):
             yield prev_prev_token
         prev_prev_token = prev_token
         prev_token = Token(kind, value, line_num, column)
-    yield prev_token
+    if(prev_prev_token):
+        yield prev_prev_token
+    if(prev_token):
+        yield prev_token
     yield Token(eof,'$',line_num,column + 1)
+
+code3 = r"""
+def algo()
+end
+"""
 
 code1 = r"""
 
@@ -215,7 +223,7 @@ code2 = r"""
     a = -6
 """
 
-# tokens = tokenize(code2,fixed_tokens,variable_tokens)
-# for token in tokens:
-#     print(token)
+tokens = tokenize(code3,fixed_tokens,variable_tokens)
+for token in tokens:
+    print(token)
 
