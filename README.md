@@ -86,6 +86,7 @@ A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As 
 
 As -> M | I | *identifier*.*identifier*(ARG) | *identifier*[ IExpr ]
 
+
 BExp ->  *not* BExp | BTerm B2Exp | ( BExp ) B2Exp
 
 B2Exp -> *and* BExp | *or* BExp | epsilon
@@ -93,6 +94,8 @@ B2Exp -> *and* BExp | *or* BExp | epsilon
 BTerm -> *identifier* | *true* | *false* | IExp == IExp | V == V | IExp >= IExp | IExp <= IExp | IExp < IExp | IExp > IExp
 
 ELSE -> *else* { B } | epsilon
+
+
 
 IExp -> T X
 
@@ -106,11 +109,15 @@ F -> *num* | ( IExp ) | *identifier*
 
 N -> IExp | epsilon
 
+
+
 VExp -> VT XV
 
 XV -> + VExp XV | - VExp XV | * IExp |  epsilon
 
 VT -> (IExp, IExp) | (VExp) | *identifier* | *dir* N
+
+
 
 R -> *line_up* *identifier* *with* [ ] *in* VExp *heading* *dir* *args* ARG RN
 
