@@ -127,8 +127,24 @@ def tokenize(code,keywords,variable_tokens):
                 value = True
             else:
                 value = False
-                
-
+        elif kind == 'direc':
+            kind = direc
+            if(value == 'up_right'):
+                value = (-1,1)
+            elif(value == 'right'):
+                value = (0,1)
+            elif(value == 'down_right'):
+                value = (1,1)
+            elif(value == 'down'):
+                value = (1,0)
+            elif(value == 'down_left'):
+                value = (1,-1)
+            elif(value == 'left'):
+                value = (0,-1)
+            elif(value == 'up_left'):
+                value = (-1,-1)
+            elif(value == 'up'):
+                value = (-1,0)
         elif kind == 'Id' or kind == 'one_no_word' or kind == 'two_no_word':
             try:
                 kind = keywords[value]
@@ -195,7 +211,7 @@ code2 = r"""
     a = -6
 """
 
-tokens = tokenize(code2,fixed_tokens,variable_tokens)
+tokens = tokenize(code1,fixed_tokens,variable_tokens)
 for token in tokens:
     print(token)
 
