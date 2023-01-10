@@ -1,5 +1,5 @@
 import Compiler.utils as util
-from Compiler.semantic import *
+from Compiler.semantic.language import *
 from .visitor import *
 from ._def import *
 
@@ -14,8 +14,8 @@ class TypeCheckerVisitor(object):
     @when(ProgramNode)
     def visit(self, node: ProgramNode, context: ProgramContext, index: int = 0):
         _, def_err = self.visit(node.definitions, context, index)
-        # _, beg_err = self.visit(node.begin_with, context, index)
-        errors = def_err  # + beg_err
+        _, beg_err = self.visit(node.begin_with, context, index)
+        errors = def_err + beg_err
         return None, errors
 
     @when(DefinitionsNode)
@@ -27,9 +27,22 @@ class TypeCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return None, errors
 
-    # @when(BeginWithNode)
-    # def visit(self, node: BeginWithNode, context: OtherContext):
-    #     pass
+    @when(BeginWithNode)
+    def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
+        errors = []
+        new_context = context.get_context(index)
+        for i, child in enumerate(node.step):
+            _, child_err = self.visit(child, new_context, i)
+            util.update_errs(errors, child_err)
+        return None, errors
+
+    @when(StepNode)
+    def visit(self, node: StepNode, context: ProgramContext, index: int = 0):
+        errors = []
+        for child in node.instructions:
+            _, child_err = self.visit(child, context, index)
+            util.update_errs(errors, child_err)
+        return None, errors
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
@@ -117,12 +130,34 @@ class TypeCheckerVisitor(object):
 
     @when(VariableNode)
     def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
-        return node.type, None
+        type_var = context.get_variable_info(node.id).type
+        return type_var, None
+
+    @when(AssignNode)
+    def visit(self, node: AssignNode, context: OtherContext, index: int = 0):
+        errors = []
+        type_var = context.get_variable_info(node.id).type
+        expr_type, expr_err = self.visit(node.expr, context, index)
+        util.update_err_type(errors, type_var, expr_type)
+        util.update_errs(errors, expr_err)
+        return errors
+
+    @when(SetIndexNode)
+    def visit(self, node: SetIndexNode, context: OtherContext, index: int = 0):
+        errors = []
+        type_var = context.get_variable_info(node.id).type
+        util.update_err_type(errors, "Array", type_var)
+        expr_type, expr_err = self.visit(node.expr, context, index)
+        if not len(errors):
+            type_index = type_var.type
+            util.update_err_type(errors, type_index, expr_type)
+        util.update_errs(errors, expr_err)
+        return errors
 
     @when(CallNode)
     def visit(self, node: CallNode, context: OtherContext, index: int = 0):
         errors = []
-        func_info = context.get_func(node.lex, node.args)
+        func_info = context.get_func_info(node.lex, node.args)
         for get_arg, set_arg in zip(node.args, func_info.args):
             get_type, _ = self.visit(get_arg)
             set_type = set_arg.type
@@ -132,7 +167,7 @@ class TypeCheckerVisitor(object):
     @when(BeginCallNode)
     def visit(self, node: BeginCallNode, context: OtherContext, index: int = 0):
         errors = []
-        func_info = context.get_func(node.lex, node.args)
+        func_info = context.get_func_info(node.lex, node.args)
         for get_arg, set_arg in zip(node.args, func_info.args):
             get_type, _ = self.visit(get_arg)
             set_type = set_arg.type
