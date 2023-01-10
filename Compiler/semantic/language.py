@@ -87,17 +87,16 @@ class ConditionNode(StatementNode):
         self.body = body
 
 
-class GetIndexNode(ExpressionNode):
-    pass
-
-
-class SetIndexNode(ExpressionNode):
-    pass
-
-
 class AssignNode(ExpressionNode):
     def __init__(self, idx, expr):
         self.id = idx
+        self.expr = expr
+
+
+class SetIndexNode(ExpressionNode):
+    def __init__(self, idx, index, expr):
+        self.id = idx
+        self.index = index
         self.expr = expr
 
 
@@ -148,6 +147,13 @@ class BeginCallNode(AtomicNode):
         self.args = args
         self.poss = poss
         self.rot = rot
+
+
+class GetIndexNode(UnaryNode):
+    def __init__(self, idx, index, expr):
+        self.id = idx
+        self.index = index
+        self.expr = expr
 
 
 class NotNode(UnaryNode):

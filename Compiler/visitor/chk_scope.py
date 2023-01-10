@@ -16,7 +16,7 @@ class ScopeCheckerVisitor(object):
         context = context or ProgramContext()
         def_error = self.visit(node.definitions, context, index)
         begin_error = self.visit(node.begin_with, context, index)
-        return def_error  + begin_error
+        return def_error + begin_error
 
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
@@ -27,8 +27,17 @@ class ScopeCheckerVisitor(object):
         return errors
 
     @when(BeginWithNode)
-    def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
-        return []
+    def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
+        errors = []
+        new_context = context.create_child_context(index)
+        for i, child in enumerate(node.step):
+            child_err = self.visit(child, new_context, i)
+            util.update_errs(errors, child_err)
+        return errors
+
+    @when(StepNode)
+    def visit(self, node: StepNode, context: ProgramContext, index: int = 0):
+        return None
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
@@ -77,30 +86,6 @@ class ScopeCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return errors
 
-    @when(ConstantNode)
-    def visit(self, node: ConstantNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(VariableNode)
-    def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(CallNode)
-    def visit(self, node: CallNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(BeginCallNode)
-    def visit(self, node: BeginCallNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(UnaryNode)
-    def visit(self, node: UnaryNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(BinaryNode)
-    def visit(self, node: BinaryNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(TernaryNode)
-    def visit(self, node: TernaryNode, context: OtherContext, index: int = 0):
+    @when(ExpressionNode)
+    def visit(self, node: ExpressionNode, context: OtherContext, index: int = 0):
         return None

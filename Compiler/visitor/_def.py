@@ -56,6 +56,9 @@ class ProgramContext(Context):
             self.local_funcs.append(func)
             return func
 
+    def get_func_info(self, fname, params):
+        return self.get_local_function_info(fname, params)
+
     def is_func_defined(self, fname, params):
         return self.is_local_func(fname, params)
 
@@ -78,10 +81,19 @@ class OtherContext(Context):
     def is_func_defined(self, fname, params):
         return self.parent.is_func_defined(fname, params)
 
+    def get_func_info(self, fname, params):
+        return self.parent.get_func_info(fname, params)
+
     def define_variable(self, vname):
         if not self.is_var_defined(vname):
             var = VariableInfo(vname)
             self.local_vars.append(var)
+
+    def get_variable_info(self, vname):
+        variable = self.get_local_variable_info(vname)
+        if variable:
+            return variable
+        return self.parent.get_variable_info(vname)
 
     def is_var_defined(self, vname):
         if type(self) == ProgramContext or not self.is_local_var(vname):
