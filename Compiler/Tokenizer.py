@@ -34,14 +34,14 @@ class Token:
 # TODO Numeros negativos
 
 
-variable_tokens = {
-  'num'              :  (num,              r'\d+'),                                                                                       # Numbers      
+variable_tokens = {  
+  'num'              :  (num,              r'(?:\d+)'),                                                                                       # Numbers      
   'bool_value'       :  (bool_value,       r'(?:true)|(?:false)'),                                                                        # Bool Values          
   'type_id'          :  (type_id,          r'(?:int)|(?:bool)|(?:group)|(?:array)|(?:vector)'),                                           # Type Identifiers                
   'rpos'             :  (rpos,             r'(?:next)|(?:prev)'),                                                                         # Relative Position          
   'direc'            :  (direc,            r'(?:up_right)|(?:down_right)|(?:down_left)|(?:up_left)|(?:up)|(?:right)|(?:down)|(?:left)'),  # Directions       
   'two_no_word'      :  ("Two No word",    r'(//)|(<=)|(>=)|(==)'),                                                                       # Non word
-  'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                    # Non word
+  'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                     # Non word
   'Id'               :  (Id,               r'(?:[a-zA-Z]_*)+')                                                                            # Identifiers      
 }
   
@@ -106,13 +106,21 @@ def tokenize(code,keywords,variable_tokens):
     line_num = 1
     line_start = 0
     column = -1
+    prev_prev_token = None
+    prev_token = None
     for mo in re.finditer(tok_regex, code):
         kind = mo.lastgroup
         value = mo.group()
         column = mo.start() - line_start
         if kind == 'num':
-            value = int(value)
-            kind = num
+            try:
+                value = int(value)
+                kind = num
+                if(prev_prev_token and prev_token and prev_token.token_type == minus and prev_prev_token.token_type not in [cpar, num, Id]):
+                    prev_token = None
+                    value = -value
+            except ValueError:
+                raise RuntimeError(f'{value!r} at {line_num} is not a valid number')
         elif kind == 'bool_value':
             kind = bool_value
             if(value == 'true'):
@@ -139,7 +147,11 @@ def tokenize(code,keywords,variable_tokens):
             raise RuntimeError(f'{value!r} unexpected on line {line_num} at column {column}' )
         else:
             kind, _ =  variable_tokens[kind]
-        yield Token(kind, value, line_num, column)
+        if(prev_prev_token):
+            yield prev_prev_token
+        prev_prev_token = prev_token
+        prev_token = Token(kind, value, line_num, column)
+    yield prev_token
     yield Token(eof,'$',line_num,column + 1)
 
 code1 = r"""
@@ -179,10 +191,11 @@ end
 """
 
 code2 = r"""
-    
+    5-6
+    a = -6
 """
 
-tokens = tokenize(code1,fixed_tokens,variable_tokens)
+tokens = tokenize(code2,fixed_tokens,variable_tokens)
 for token in tokens:
     print(token)
 
