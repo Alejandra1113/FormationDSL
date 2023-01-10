@@ -214,3 +214,28 @@ class LtNode(BinaryNode):
 
 class LinkNode(TernaryNode):
     pass
+
+
+
+production_to_node = {
+    0: ProgramNode,
+    1: DefinitionsNode,
+    2: None,
+    3: None,
+    4: None,
+    5: None,
+    6: None,
+    7: LoopNode,
+    8: ConditionNode,
+    9: IterNode,
+   10: BorrowNode,
+   11: LinkNode,
+   12: CallNode,
+   13: CallNode,
+   14: None,
+   15: None, 
+   16: None,
+   17: None,
+   18: 
+    
+}
