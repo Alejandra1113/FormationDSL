@@ -199,7 +199,7 @@ code2 = r"""
     a = -6
 """
 
-tokens = tokenize(code2,fixed_tokens,variable_tokens)
-for token in tokens:
-    print(token)
+# tokens = tokenize(code2,fixed_tokens,variable_tokens)
+# for token in tokens:
+#     print(token)
 

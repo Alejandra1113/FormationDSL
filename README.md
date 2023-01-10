@@ -80,7 +80,10 @@ P -> *type* *identifier* P1 | epsilon
 
 P1 -> ,*type* *identifier* P1 | epsilon
 
-B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } ELSE B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon
+B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } *else* B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon
+
+<!-- BExp, IExp, VExp
+B -> A B | *while* ( BExp ) { B } B | *if* ( BExp ) { B } *else* B | *all_of* *identifier* *at* VExp *of* *r_poss* B | *from* *identifier* *borrow* IExp *starting_at* IExp *to* *identifier* B | *node* VExp *of* *node* B | *identifier*(ARG) | *identifier*.*identifier*(ARG) | epsilon -->
 
 A -> *type* *identifier* = As | *identifier*[ IExpr ] = As  | *identifier* = As  | *type* *identifier* = *from* *identifier* *take* IExp *starting_at* IExp
 
@@ -133,3 +136,10 @@ I -> [*num* I2] | [*num* : *num*]
 
 I2 -> , *num* I2 | epsilon
 
+B -> C and B | C or B | not B | C
+C -> E == C | E != C | E <= C | E >= C | E > C | E < C | E
+E -> E + T | E - T | T
+T -> T * F | T / F | T % F | F
+F -> bool | num | V | id | ( B )
+
+V -> ( E, E )
