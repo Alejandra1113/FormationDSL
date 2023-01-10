@@ -2,11 +2,11 @@ from itertools import chain
 from operator import concat
 import re
 from pygtrie import Trie
-from Grammar import comma,plus,minus,star,div,opar,cpar,lt,gt,lte
+from Grammar import comma,plus,minus,star,div,opar,cpar,lt,gt,lte, groups
 from Grammar import gte ,eq ,andop ,orop ,notop ,dot ,ocbra ,ccbra
 from Grammar import rem,wloop,deff,condif,condelse,iter_aof,obra,cbra
 from Grammar import at, of , from_op , borrow , st_at , to , lineup , step , heading
-from Grammar import args, take, with_op, definition, begin_with, end, assign, in_op
+from Grammar import args, take, with_op, definition, begin_with, end, assign, in_op, two_points
 from Grammar import num, Id,bool_value, type_id, rpos, direc, eof
 class Token:
     """
@@ -47,6 +47,8 @@ variable_tokens = {
   
 
 fixed_tokens = Trie()
+fixed_tokens['groups']              = groups
+fixed_tokens[':']                   = two_points                                       
 fixed_tokens[',']                   = comma                                       
 fixed_tokens['+']                   = plus               
 fixed_tokens['-']                   = minus              
@@ -180,6 +182,8 @@ def dos_columnas()
     all_of G at down of prev
     prim[0] left of G[0]
 }
+
+groups
 
 begin_with 5
     line_up dos_filas with [1,2,3] in (0,0) heading up args()
