@@ -1,11 +1,12 @@
 from itertools import chain
+from operator import concat
 import re
 from pygtrie import Trie
 from Grammar import comma,plus,minus,star,div,opar,cpar,lt,gt,lte
 from Grammar import gte ,eq ,andop ,orop ,notop ,dot ,ocbra ,ccbra
 from Grammar import rem,wloop,deff,condif,condelse,iter_aof,obra,cbra
 from Grammar import at, of , from_op , borrow , st_at , to , lineup , step , heading
-from Grammar import args, take, with_op, definition, begin_with, end, assing, in_op
+from Grammar import args, take, with_op, definition, begin_with, end, assign, in_op
 from Grammar import num, Id,bool_value, type_id, rpos, direc, eof
 class Token:
     """
@@ -25,6 +26,10 @@ class Token:
         self.row = row
         self.column = column
 
+    def __repr__(self) -> str:
+        return f'-------------------\ntoken_type: {self.token_type}\ntoken_lex: {self.lex}\n------------------------'
+    
+
 
 # TODO Numeros negativos
 
@@ -34,7 +39,9 @@ variable_tokens = {
   'bool_value'       :  (bool_value,       r'(?:true)|(?:false)'),                                                                        # Bool Values          
   'type_id'          :  (type_id,          r'(?:int)|(?:bool)|(?:group)|(?:array)|(?:vector)'),                                           # Type Identifiers                
   'rpos'             :  (rpos,             r'(?:next)|(?:prev)'),                                                                         # Relative Position          
-  'direc'            :  (direc,            r'(?:up)|(?:up_right)|(?:right)|(?:down_right)|(?:down)|(?:down_left)|(?:left)|(?:up_left)'),  # Directions                      
+  'direc'            :  (direc,            r'(?:up_right)|(?:down_right)|(?:down_left)|(?:up_left)|(?:up)|(?:right)|(?:down)|(?:left)'),  # Directions       
+  'two_no_word'      :  ("Two No word",    r'(//)|(<=)|(>=)|(==)'),                                                                       # Non word
+  'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                    # Non word
   'Id'               :  (Id,               r'(?:[a-zA-Z]_*)+')                                                                            # Identifiers      
 }
   
@@ -59,20 +66,21 @@ fixed_tokens['.']                   = dot
 fixed_tokens['{']                   = ocbra              
 fixed_tokens['}']                   = ccbra              
 fixed_tokens['%']                   = rem                
+fixed_tokens['[']                   = obra               
+fixed_tokens[']']                   = cbra               
+fixed_tokens['=']                   = assign           
 fixed_tokens['while']               = wloop                  
 fixed_tokens['def']                 = deff                 
 fixed_tokens['if']                  = condif              
 fixed_tokens['else']                = condelse              
-fixed_tokens['allof']               = iter_aof                
-fixed_tokens['[']                   = obra               
-fixed_tokens[']']                   = cbra               
+fixed_tokens['all_of']               = iter_aof                
 fixed_tokens['at']                  = at                  
 fixed_tokens['of']                  = of                  
 fixed_tokens['from']                = from_op               
 fixed_tokens['borrow']              = borrow                  
-fixed_tokens['starting at']         = st_at                        
+fixed_tokens['starting_at']         = st_at                        
 fixed_tokens['to']                  = to                  
-fixed_tokens['lineup']              = lineup                  
+fixed_tokens['line_up']              = lineup                  
 fixed_tokens['step']                = step                  
 fixed_tokens['heading']             = heading                  
 fixed_tokens['args']                = args                  
@@ -81,7 +89,6 @@ fixed_tokens['with']                = with_op
 fixed_tokens['definition']          = definition                  
 fixed_tokens['begin_with']          = begin_with                  
 fixed_tokens['end']                 = end                  
-fixed_tokens['=']                   = assing             
 fixed_tokens['in']                  = in_op               
 
 
@@ -112,11 +119,16 @@ def tokenize(code,keywords,variable_tokens):
                 value = True
             else:
                 value = False
-        elif kind == 'Id':
+                
+
+        elif kind == 'Id' or kind == 'one_no_word' or kind == 'two_no_word':
             try:
                 kind = keywords[value]
             except:
-                kind = Id
+                if kind == 'Id':
+                    kind = Id
+                else:
+                    raise RuntimeError(f'{value!r} unexpected on line {line_num}')
         elif kind == 'NEWLINE':
             line_start = mo.end()
             line_num += 1
@@ -124,16 +136,53 @@ def tokenize(code,keywords,variable_tokens):
         elif kind == 'SKIP':
             continue
         elif kind == 'MISMATCH':
-            raise RuntimeError(f'{value!r} unexpected on line {line_num}')
+            raise RuntimeError(f'{value!r} unexpected on line {line_num} at column {column}' )
         else:
-            kind, _ =  variable_tokens[kind][0]
+            kind, _ =  variable_tokens[kind]
         yield Token(kind, value, line_num, column)
     yield Token(eof,'$',line_num,column + 1)
 
-code = """
+code1 = r"""
 
+definition
 
+def dos_filas(){
+    int temp  = G.len() // 2
+    int resto = G.len() % 2
+    int i = 0
+    while(i < temp + resto){
+        if(i < temp - 1){
+            G[temp + 1] down of G[i]
+        }
+        if( i > 0)
+        {
+            G[temp + i - 1] left of G.[temp + 1]
+        }
+    }
+}
 
+def dos_columnas()
+{
+    group prim = from G take G.len//2 starting_at 0
+    all_of prim at down of prev
+    all_of G at down of prev
+    prim[0] left of G[0]
+}
 
+begin_with 5
+    line_up dos_filas with [1,2,3] in (0,0) heading up args()
+    line_up dos_columnas with [4,5] in (2,0) heading up_left args()
+step
+    line_up dos_columnas with [1,2,3] in (0,0) heading up args()
+    line_up dos_filas with [4,5] in (0,2) heading up args()
+end
 """
+
+code2 = r"""
+    
+"""
+
+tokens = tokenize(code1,fixed_tokens,variable_tokens)
+for token in tokens:
+    print(token)
 
