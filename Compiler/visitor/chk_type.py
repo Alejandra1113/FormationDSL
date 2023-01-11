@@ -21,31 +21,30 @@ class TypeCheckerVisitor(object):
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
         errors = []
-        new_context = context.get_context(index)
         for i, child in enumerate(node.functions):
-            _, child_err = self.visit(child, new_context, i)
+            _, child_err = self.visit(child, context.define_context, i)
             util.update_errs(errors, child_err)
         return None, errors
 
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
         errors = []
-        new_context = context.get_context(index)
         for i, child in enumerate(node.step):
-            _, child_err = self.visit(child, new_context, i)
+            _, child_err = self.visit(child, context.begin_context, i)
             util.update_errs(errors, child_err)
         return None, errors
 
     @when(StepNode)
-    def visit(self, node: StepNode, context: ProgramContext, index: int = 0):
+    def visit(self, node: StepNode, context: BeginContext, index: int = 0):
         errors = []
+        new_context = context.get_context(index)
         for child in node.instructions:
-            _, child_err = self.visit(child, context, index)
+            _, child_err = self.visit(child, new_context, index)
             util.update_errs(errors, child_err)
         return None, errors
 
     @when(FuncDeclarationNode)
-    def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
+    def visit(self, node: FuncDeclarationNode, context: DefineContext, index: int = 0):
         errors = []
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):

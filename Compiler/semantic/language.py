@@ -49,10 +49,12 @@ class VarDeclarationNode(DeclarationNode):
         self.type = type
         self.expr = expr
 
+
 class ParamNode(DeclarationNode):
-    def __init__(self,idx, type):
+    def __init__(self, idx, type):
         self.idx = idx
         self.type = type
+
 
 class GroupVarDeclarationNode(DeclarationNode):
     def __init__(self, type, idx, collec, init, len):
@@ -152,10 +154,8 @@ class BeginCallNode(AtomicNode):
         self.rot = rot
 
 
-class GetIndexNode(UnaryNode):
-    def __init__(self, idx, index):
-        self.id = idx
-        self.index = index
+class ArrayNode(InstantiateNode):
+    pass
 
 
 class NotNode(UnaryNode):
@@ -172,6 +172,7 @@ class MinusNode(BinaryNode):
 
 class StarNode(BinaryNode):
     pass
+
 
 class DivNode(BinaryNode):
     pass
@@ -213,11 +214,13 @@ class LtNode(BinaryNode):
     pass
 
 
-class LinkNode(TernaryNode):
+class GetIndexNode(BinaryNode):
     pass
+
 
 class SliceNode(BinaryNode):
     pass
 
-class ArrayNode(UnaryNode):
+
+class LinkNode(TernaryNode):
     pass

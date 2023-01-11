@@ -21,29 +21,29 @@ class SemanticCheckerVisitor(object):
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
         errors = []
         for i, child in enumerate(node.functions):
-            child_err = self.visit(child, context, i)
+            child_err = self.visit(child, context.define_context, i)
             util.update_errs(errors, child_err)
         return errors
 
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
         errors = []
-        new_context = context.get_context(index)
         for i, child in enumerate(node.step):
-            child_err = self.visit(child, new_context, i)
+            child_err = self.visit(child, context.begin_context, i)
             util.update_errs(errors, child_err)
         return errors
 
     @when(StepNode)
-    def visit(self, node: StepNode, context: ProgramContext, index: int = 0):
+    def visit(self, node: StepNode, context: BeginContext, index: int = 0):
         errors = []
+        new_context = context.get_context(index)
         for child in node.instructions:
-            child_err = self.visit(child, context, index)
+            child_err = self.visit(child, new_context, index)
             util.update_errs(errors, child_err)
         return errors
 
     @when(FuncDeclarationNode)
-    def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
+    def visit(self, node: FuncDeclarationNode, context: DefineContext, index: int = 0):
         errors = []
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):
@@ -54,10 +54,10 @@ class SemanticCheckerVisitor(object):
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
-        if context.is_var_defined(node.idx):
-            errors.append(f"variable {node.idx} está ya definida")
+        if context.is_var_defined(node.id):
+            errors.append(f"variable {node.id} está ya definida")
         else:
-            context.define_variable(node.idx)
+            context.define_variable(node.id, node.type)
         expr_err = self.visit(node.expr, context, index)
         util.update_errs(errors, expr_err)
         return errors if len(errors) else None
@@ -68,7 +68,7 @@ class SemanticCheckerVisitor(object):
         if context.is_var_defined(node.id):
             errors.append(f"{node.id} está ya definida")
         else:
-            context.define_variable(node.id)
+            context.define_variable(node.id, node.type)
         collec_err = self.visit(node.collec, context, index)
         util.update_errs(errors, collec_err)
 
@@ -81,7 +81,7 @@ class SemanticCheckerVisitor(object):
 
     @when(LoopNode)
     def visit(self, node: LoopNode, context: OtherContext, index: int = 0):
-        expr_err = self.visit(node.expr, context.parent)
+        expr_err = self.visit(node.expr, context)
         errors = expr_err or []
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):
@@ -118,8 +118,8 @@ class SemanticCheckerVisitor(object):
     @when(ConditionNode)
     def visit(self, node: ConditionNode, context: OtherContext, index: int = 0):
         errors = []
-        if node.expr:
-            errors = self.visit(node.expr, context, index)
+        expr_err = self.visit(node.expr, context, index)
+        util.update_errs(errors, expr_err)
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)

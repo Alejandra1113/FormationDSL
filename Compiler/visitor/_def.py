@@ -99,9 +99,9 @@ class OtherContext(Context):
     def get_func_info(self, fname, params):
         return self.parent.get_func_info(fname, params)
 
-    def define_variable(self, vname):
+    def define_variable(self, vname, vtype):
         if not self.is_var_defined(vname):
-            var = VariableInfo(vname)
+            var = VariableInfo(vname, vtype)
             self.local_vars.append(var)
 
     def get_variable_info(self, vname):
@@ -111,9 +111,10 @@ class OtherContext(Context):
         return self.parent.get_variable_info(vname)
 
     def is_var_defined(self, vname):
-        if type(self) == ProgramContext or not self.is_local_var(vname):
-            return False
-        return self.parent.is_local_var(vname)
+        find = self.is_local_var(vname)
+        if type(self.parent) != DefineContext and not find:
+            return self.parent.is_var_defined(vname)
+        return find
 
     def is_local_var(self, vname):
         return self.get_local_variable_info(vname) is not None
