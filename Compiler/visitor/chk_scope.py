@@ -8,44 +8,47 @@ __all__ = ['ScopeCheckerVisitor']
 
 class ScopeCheckerVisitor(object):
     @on('node')
-    def visit(self, node, context: Context, index):
+    def visit(self, node, context, index):
         pass
 
     @when(ProgramNode)
     def visit(self, node: ProgramNode, context: ProgramContext = None, index: int = 0):
         context = context or ProgramContext()
-        def_error = self.visit(node.definitions, context, index)
-        begin_error = self.visit(node.begin_with, context, index)
+        def_error = self.visit(node.definitions, context)
+        begin_error = self.visit(node.begin_with, context)
         return def_error + begin_error
 
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
         errors = []
+
+        context.set_define_context()
         for i, child in enumerate(node.functions):
-            child_err = self.visit(child, context, i)
+            child_err = self.visit(child, context.define_context, i)
             util.update_errs(errors, child_err)
         return errors
 
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
         errors = []
-        new_context = context.create_child_context(index)
+        context.set_begin_context(node.num)
         for i, child in enumerate(node.step):
-            child_err = self.visit(child, new_context, i)
+            child_err = self.visit(child, context.begin_context, i)
             util.update_errs(errors, child_err)
         return errors
 
     @when(StepNode)
-    def visit(self, node: StepNode, context: ProgramContext, index: int = 0):
+    def visit(self, node: StepNode, context: BeginContext, index: int = 0):
+        _ = context.create_child_context(index)
         return None
 
     @when(FuncDeclarationNode)
-    def visit(self, node: FuncDeclarationNode, context: ProgramContext, index: int = 0):
+    def visit(self, node: FuncDeclarationNode, context: DefineContext, index: int = 0):
         errors = []
-        if context.is_func_defined(node.idx, node.params):
-            errors.append(f"funcion {node.idx} está ya definida")
+        if context.is_func_defined(node.id, node.params):
+            errors.append(f"funcion {node.id} está ya definida")
         else:
-            context.define_function(node.idx, node.params)
+            context.define_function(node.id, node.params)
         new_context = context.create_child_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)

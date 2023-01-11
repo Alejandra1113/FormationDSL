@@ -1,13 +1,14 @@
 from automata import build_LR1_automaton
 from pandas import DataFrame
 
+
 class ShiftReduceParser:
     SHIFT = 'SHIFT'
     REDUCE = 'REDUCE'
     OK = 'OK'
     GOTO = "GOTO"
-    
-    def __init__(self, G, action = None, goto = None, verbose=False):
+
+    def __init__(self, G, action=None, goto=None, verbose=False):
         self.G = G
         self.verbose = verbose
         if action is None or goto is None:
@@ -17,16 +18,17 @@ class ShiftReduceParser:
         else:
             self.action = action
             self.goto = goto
-    
+
     def _build_parsing_table(self):
         raise NotImplementedError()
 
     def __call__(self, w):
-        stack = [ 0 ]
+        stack = [0]
         # cursor = 0
         output = []
-      
-       #==========
+        lookahead = next(w)
+       # ==========
+
         ast = []
 
         while True:
@@ -34,90 +36,95 @@ class ShiftReduceParser:
             state = stack[-1]
             # if self.verbose: print(stack, '<---||--->', w[cursor:])
             action, tag = self.action[(state, lookahead.token_type.Name)]
-            
+
             if action == ShiftReduceParser.SHIFT:
                 stack.append(tag)
-                lookahead = next(w)
-                
-              #=========================================
                 ast.append(lookahead.lex)
-              #=========================================
-              
+                lookahead = next(w)
+
+              # =========================================
+              # =========================================
+
             elif action == ShiftReduceParser.REDUCE:
                 prod = self.G.Productions[tag]
                 left, rigth = prod
-                
-              #===========================================  
+
+              # ===========================================
                 attributes = prod.attributes
-                assert all(rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
+                assert all(
+                    rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
                 rule = attributes[0]
-                
+
                 if len(rigth):
-                    synteticed = [None] + stack[-len(rigth):]
+                    synteticed = [None] + ast[-len(rigth):]
                     value = rule(None, synteticed)
                     ast[-len(rigth):] = [value]
                 else:
                     ast.append(rule(None, None))
-              #===========================================
-                
+              # ===========================================
+
                 for i in rigth:
                     stack.pop()
-                
-                _ ,iD = self.goto.get((stack[-1],left.Name))
+
+                _, iD = self.goto.get((stack[-1], left.Name))
                 stack.append(iD)
                 output.append(prod)
-                
+
             elif action == ShiftReduceParser.OK:
-                    return output, ast[0]
-            else:   
+                return output, ast[0]
+            else:
                 raise TypeError
-            
-            
+
+
 class LR1Parser(ShiftReduceParser):
     def _build_parsing_table(self):
         G = self.G.AugmentedGrammar(True)
-        
+
         automaton = build_LR1_automaton(G)
         for i, node in enumerate(automaton):
-            if self.verbose: print(i, '\t', '\n\t '.join(str(x) for x in node.state), '\n')
+            if self.verbose:
+                print(i, '\t', '\n\t '.join(str(x) for x in node.state), '\n')
             node.idx = i
 
         for node in automaton:
             idx = node.idx
             for item in node.state:
                 next_symbol = item.NextSymbol
-                
-                if next_symbol is None: 
+
+                if next_symbol is None:
                     for l in item.lookaheads:
                         if item.production.Left == G.startSymbol and l == G.EOF:
-                            LR1Parser._register(self.action, (idx,l.Name), (ShiftReduceParser.OK, None))
+                            LR1Parser._register(
+                                self.action, (idx, l.Name), (ShiftReduceParser.OK, None))
                             continue
                         k = G.Productions.index(item.production)
-                        LR1Parser._register(self.action, (idx,l.Name),  (ShiftReduceParser.REDUCE, k))
-                        
+                        LR1Parser._register(
+                            self.action, (idx, l.Name),  (ShiftReduceParser.REDUCE, k))
+
                 elif next_symbol.IsNonTerminal:
                     transit = node.transitions.get(next_symbol.Name)
                     if transit:
-                        LR1Parser._register(self.goto, (idx,next_symbol.Name),  (None, transit[0].idx))
+                        LR1Parser._register(
+                            self.goto, (idx, next_symbol.Name),  (None, transit[0].idx))
 
-                else: 
-                    
+                else:
+
                     transit = node.transitions.get(next_symbol.Name)
                     if transit:
-                        LR1Parser._register(self.action, (idx,next_symbol.Name), (ShiftReduceParser.SHIFT, transit[0].idx))
-                        
-                
+                        LR1Parser._register(
+                            self.action, (idx, next_symbol.Name), (ShiftReduceParser.SHIFT, transit[0].idx))
+
                 # Your code here!!!
                 # - Fill `self.Action` and `self.Goto` according to `item`)
                 # - Feel free to use `self._register(...)`)
                 pass
-        
+
     @staticmethod
     def _register(table, key, value):
         assert key not in table or table[key] == value, 'Shift-Reduce or Reduce-Reduce conflict!!!'
         table[key] = value
-  
-  
+
+
 def evaluate_reverse_parse(right_parse, operations, tokens):
     if not right_parse or not operations or not tokens:
         return
@@ -129,12 +136,13 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
         if operation == ShiftReduceParser.SHIFT:
             token = next(tokens)
             stack.append(token.lex)
-        
+
         elif operation == ShiftReduceParser.REDUCE:
             production = next(right_parse)
             head, body = production
             attributes = production.attributes
-            assert all(rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
+            assert all(
+                rule is None for rule in attributes[1:]), 'There must be only synteticed attributes.'
             rule = attributes[0]
 
             if len(body):
@@ -148,9 +156,10 @@ def evaluate_reverse_parse(right_parse, operations, tokens):
 
     assert len(stack) == 1
     assert isinstance(next(tokens).token_type, EOF)
-    return stack[0]      
+    return stack[0]
 
-######################## Visualize DataTable #############################       
+######################## Visualize DataTable #############################
+
 
 def encode_value(value):
     try:
@@ -159,12 +168,13 @@ def encode_value(value):
             return 'S' + str(tag)
         elif action == ShiftReduceParser.REDUCE:
             return repr(tag)
-        elif action ==  ShiftReduceParser.OK:
+        elif action == ShiftReduceParser.OK:
             return action
         else:
             return value
     except TypeError:
         return value
+
 
 def table_to_dataframe(table):
     d = {}
@@ -173,6 +183,6 @@ def table_to_dataframe(table):
         try:
             d[state][symbol] = value
         except KeyError:
-            d[state] = { symbol: value }
+            d[state] = {symbol: value}
 
     return DataFrame.from_dict(d, orient='index', dtype=str)

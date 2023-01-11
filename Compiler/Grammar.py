@@ -1,5 +1,5 @@
 from pycompiler import Grammar, Terminal, NonTerminal, EOF, Epsilon
-from semantic.language import *
+from Compiler.semantic.language import *
 
 Gram = Grammar()
 comma, plus, minus, star, div, opar, cpar, lt, gt, lte = Gram.Terminals(', + - * / ( ) < > <=')
@@ -17,9 +17,9 @@ D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V = Gram.NonTerm
 S = Gram.NonTerminal('S', True)
 
 # S %= definition + D + groups + G + begin_with + num + R + end, lambda h, s: ProgramNode(s[2], BeginWithNode(s[6], s[7][2]))
-S %= definition + D + begin_with + num + R + end, lambda h, s: ProgramNode(s[2], BeginWithNode(s[4], s[5][2]))
+S %= definition + D + begin_with + num + R + end, lambda h, s: ProgramNode(DefinitionsNode(s[2]), BeginWithNode(s[4], s[5][1]))
 
-D %= deff + Id + opar + P + cpar + ocbra + B + ccbra + D, lambda h, s: [DefinitionsNode(s[1])] + s[9]
+D %= deff + Id + opar + P + cpar + ocbra + B + ccbra + D, lambda h, s: [FuncDeclarationNode(s[2], s[4], s[7])] + s[9]
 D %= Gram.Epsilon, lambda h, s: []
 
 P %= type_id + Id + P1, lambda h, s: [ParamNode(s[2], s[1])] + s[3]
@@ -29,7 +29,7 @@ P1 %= comma + type_id + Id + P1, lambda h, s: [ParamNode(s[3], s[2])] + s[4]
 P1 %= Gram.Epsilon, lambda h, s: []
 
 B %= A + B, lambda h, s: [s[1]] + s[2]
-B %= wloop + opar + BE + cpar + ocbra + B + ccbra + B, lambda h, s: [LoopNode(s[3], s[6])] + s[7]
+B %= wloop + opar + BE + cpar + ocbra + B + ccbra + B, lambda h, s: [LoopNode(s[3], s[6])] + s[8]
 B %= condif + opar + BE + cpar + ocbra + B + ccbra + ELSE + B, lambda h, s: [ConditionNode(s[3], s[6])] + s[8] + s[9]
 B %= iter_aof + Id + at + BE + of + rpos + B, lambda h, s: [IterNode(s[2], s[4], s[6])] + s[7]
 B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [BorrowNode(s[2], s[8], s[4], s[5])] + s[9]
@@ -51,11 +51,10 @@ AS %= Id + obra + BE + cbra, lambda h, s: CallNode(s[1], s[3])
 AS %= I, lambda h, s: s[1]
 AS %= BE, lambda h, s: s[1]
 
-
 R %= lineup + Id + with_op + I + in_op + BE + heading + direc + args + opar + ARG + cpar + RN, lambda h, s: ([BeginCallNode(
-    s[2], s[6], s[8], [s[4]]+s[10])], s[11][2]) if not s[11][1] else ([BeginCallNode(s[2], s[6], s[8], [s[4]]+s[10])] + s[11][1], s[11][2])
+    s[2], s[6], s[8], [s[4]]+s[11])], s[13][1]) if not s[13][0] else ([BeginCallNode(s[2], s[6], s[8], [s[4]]+s[11])] + s[13][0], s[13][1])
 
-RN %= step + R, lambda h, s: (None, [StepNode(s[2][1])] + s[2][2])
+RN %= step + R, lambda h, s: (None, [StepNode(s[2][0])] + s[2][1])
 RN %= Gram.Epsilon, lambda h, s: ([], [])
 RN %= R, lambda h, s: s[1]
 
@@ -100,6 +99,6 @@ F %= V, lambda h, s: s[1]
 F %= Id, lambda h, s: AtomicNode(s[1])
 F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: CallNode(s[3], s[5] + [s[1]])
 F %= opar + BE + cpar, lambda h, s: s[2]
-F %= direc, lambda h, s: s[2]
+F %= direc, lambda h, s: s[1]
 
 V %= opar + E + comma + E + cpar, lambda h, s: VectNode(s[2], s[4])
