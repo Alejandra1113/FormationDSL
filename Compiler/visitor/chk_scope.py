@@ -21,7 +21,6 @@ class ScopeCheckerVisitor(object):
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, context: ProgramContext, index: int = 0):
         errors = []
-
         context.set_define_context()
         for i, child in enumerate(node.functions):
             child_err = self.visit(child, context.define_context, i)
