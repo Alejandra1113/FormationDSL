@@ -32,10 +32,9 @@ class ExpressionNode(Node):
 
 
 class FuncDeclarationNode(DeclarationNode):
-    def __init__(self, idx, params, params_types, body):
+    def __init__(self, idx, params, body):
         self.id = idx
         self.params = params
-        self.params_types = params_types
         self.body = body
 
 
