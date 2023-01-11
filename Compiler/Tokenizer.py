@@ -35,11 +35,11 @@ class Token:
 
 
 variable_tokens = {  
-  'num'              :  (num,              r'(?:\d+)'),                                                                                       # Numbers      
-  'bool_value'       :  (bool_value,       r'(?:true )|(?:false )'),                                                                        # Bool Values          
-  'type_id'          :  (type_id,          r'(?:int)|(?:bool)|(?:group)|(?:array)|(?:vector)'),                                           # Type Identifiers                
-  'rpos'             :  (rpos,             r'(?:next)|(?:prev)'),                                                                         # Relative Position          
-  'direc'            :  (direc,            r'(?:up_right)|(?:down_right)|(?:down_left)|(?:up_left)|(?:up)|(?:right)|(?:down)|(?:left)'),  # Directions       
+  'num'              :  (num,              r'(?:\d+)'),                                                                                   # Numbers      
+  'bool_value'       :  (bool_value,       r'(?:(\W|\A)true(\W|\Z))|(?:(\W|\A)false(\W|\Z))'),                                                                      # Bool Values          
+  'type_id'          :  (type_id,          r'(?:(\W|\A)int(\W|\Z))|(?:(\W|\A)bool(\W|\Z))|(?:(\W|\A)group(\W|\Z))|(?:(\W|\A)array(\W|\Z))|(?:(\W|\A)vector(\W|\Z))'),                                           # Type Identifiers                
+  'rpos'             :  (rpos,             r'(?:(\W|\A)next(\W|\Z))|(?:(\W|\A)prev(\W|\Z))'),                                                                         # Relative Position          
+  'direc'            :  (direc,            r'(?:(\W|\A)up_right(\W|\Z))|(?:(\W|\A)down_right(\W|\Z))|(?:(\W|\A)down_left(\W|\Z))|(?:(\W|\A)up_left(\W|\Z))|(?:(\W|\A)up(\W|\Z))|(?:(\W|\A)right(\W|\Z))|(?:(\W|\A)down(\W|\Z))|(?:(\W|\A)left(\W|\Z))'),  # Directions       
   'two_no_word'      :  ("Two No word",    r'(//)|(<=)|(>=)|(==)'),                                                                       # Non word
   'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                     # Non word
   'Id'               :  (Id,               r'(?:[a-zA-Z]_*)+')                                                                            # Identifiers      
@@ -223,7 +223,16 @@ code2 = r"""
     a = -6
 """
 
-tokens = tokenize(code3,fixed_tokens,variable_tokens)
+code3 = r"""
+groups
+
+"""
+
+tokens = tokenize(code1,fixed_tokens,variable_tokens)
 for token in tokens:
     print(token)
+
+
+
+
 
