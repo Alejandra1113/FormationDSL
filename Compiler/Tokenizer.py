@@ -245,28 +245,30 @@ code4 = r"""
 5 + 6
 """
 
-# pattern = re.compile(r'(?P<alias>(([a-zA-Z]_*)+))[ \t]*=[ \t]*(?P<value>\[(\d+,)*\d+\])')
+
+def preprocess(code):
+    pattern = re.compile(r'(?P<alias>(([a-zA-Z]_*)+))[ \t]*=[ \t]*(?P<value>\[(\d+,)*\d+\])')
+    end_replace, start_index = re.search('groups',code).span()
+    end_index, start_replace = re.search('begin_with',code).span()
+    repl = {}
+    for match in pattern.finditer(code,start_index,endpos=end_index):
+        repl[match.group('alias')] = match.group('value')
+
+    repl_pattern = '|'.join([f'({key})' for key in repl.keys()])
+    def create_repl_func(repl_dict):
+        def repl_func(match):
+            return repl_dict[match.group()]
+        return repl_func
+    post_group_code = code[end_index:]
+    post_group_final = re.sub(repl_pattern,create_repl_func(repl),post_group_code)
+    return code[:end_replace] + post_group_final
+
+print(preprocess(code1))
 
 
-# start_index = re.search('groups',code1).span()[1]
-# end_index, start_replace = re.search('begin_with',code1).span()
-# repl = {}
-# for match in pattern.finditer(code1,start_index,endpos=end_index):
-#     repl[match.group('alias')] = match.group('value')
-
-# repl_pattern = '|'.join([f'({key})' for key in repl.keys()])
-# print(repl_pattern)
-# def create_repl_func(repl_dict):
-#     def repl_func(match):
-#         return repl_dict[match.group()]
-#     return repl_func
-# final = re.sub(repl_pattern,create_repl_func(repl),code1)
-# print(final)
-
-
-tokens = tokenize(code3,fixed_tokens,variable_tokens)
-for token in tokens:
-    print(token)
+# tokens = tokenize(code3,fixed_tokens,variable_tokens)
+# for token in tokens:
+#     print(token)
 
 
 
