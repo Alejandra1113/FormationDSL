@@ -108,6 +108,9 @@ class SetIndexNode(ExpressionNode):
     def __init__(self, lex):
         self.lex = lex
 
+class AtomicNode(ExpressionNode):
+    def __init__(self, lex):
+        self.lex = lex
 
 class UnaryNode(ExpressionNode):
     def __init__(self, expr):
