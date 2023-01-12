@@ -7,7 +7,7 @@ from Grammar import gte ,eq ,andop ,orop ,notop ,dot ,ocbra ,ccbra
 from Grammar import rem,wloop,deff,condif,condelse,iter_aof,obra,cbra
 from Grammar import at, of , from_op , borrow , st_at , to , lineup , step , heading
 from Grammar import args, take, with_op, definition, begin_with, end, assign, in_op, two_points
-from Grammar import num, Id,bool_value, type_id, rpos, direc, eof
+from Grammar import num, Id,bool_value, type_id, rpos, direc, eof, return_term, continue_term, break_term
 class Token:
     """
     Basic token class. 
@@ -90,7 +90,10 @@ fixed_tokens['with']                = with_op
 fixed_tokens['definition']          = definition                  
 fixed_tokens['begin_with']          = begin_with                  
 fixed_tokens['end']                 = end                  
-fixed_tokens['in']                  = in_op               
+fixed_tokens['in']                  = in_op   
+fixed_tokens['return'] = return_term 
+fixed_tokens['continue'] = continue_term 
+fixed_tokens['break'] = break_term            
 
 
 

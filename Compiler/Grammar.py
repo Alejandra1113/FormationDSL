@@ -1,5 +1,5 @@
 from pycompiler import Grammar, Terminal, NonTerminal, EOF, Epsilon
-from Compiler.semantic.language import *
+from semantic.language import *
 
 Gram = Grammar()
 comma, plus, minus, star, div, opar, cpar, lt, gt, lte = Gram.Terminals(', + - * / ( ) < > <=')
@@ -8,6 +8,7 @@ rem, wloop, deff, condif, condelse, iter_aof, groups, obra, cbra = Gram.Terminal
 at, of, from_op, borrow, st_at, to, lineup, step, heading = Gram.Terminals('at of from borrow st_at to lineup step heading')
 args, take, with_op, definition, begin_with, end, assign, in_op = Gram.Terminals('args take with definition begin_with end = in')
 num, Id, bool_value, type_id, rpos, direc = Gram.Terminals('num Id bool_value type_id rpos direc')
+return_term, continue_term, break_term = Gram.Terminals('return continue break')
 eof = Gram.EOF
 
 
