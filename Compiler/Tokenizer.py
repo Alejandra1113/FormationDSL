@@ -30,21 +30,20 @@ class Token:
         return f'-------------------\ntoken_type: {self.token_type}\ntoken_lex: {self.lex}\n------------------------'
     
 
-
-# TODO Numeros negativos
-
-
+ 
 variable_tokens = {  
-  'num'              :  (num,              r'(?:\d+)'),                                                                                   # Numbers      
-  'bool_value'       :  (bool_value,       r'(?:(\W|\A)true(\W|\Z))|(?:(\W|\A)false(\W|\Z))'),                                                                      # Bool Values          
-  'type_id'          :  (type_id,          r'(?:(\W|\A)int(\W|\Z))|(?:(\W|\A)bool(\W|\Z))|(?:(\W|\A)group(\W|\Z))|(?:(\W|\A)array(\W|\Z))|(?:(\W|\A)vector(\W|\Z))'),                                           # Type Identifiers                
-  'rpos'             :  (rpos,             r'(?:(\W|\A)next(\W|\Z))|(?:(\W|\A)prev(\W|\Z))'),                                                                         # Relative Position          
-  'direc'            :  (direc,            r'(?:(\W|\A)up_right(\W|\Z))|(?:(\W|\A)down_right(\W|\Z))|(?:(\W|\A)down_left(\W|\Z))|(?:(\W|\A)up_left(\W|\Z))|(?:(\W|\A)up(\W|\Z))|(?:(\W|\A)right(\W|\Z))|(?:(\W|\A)down(\W|\Z))|(?:(\W|\A)left(\W|\Z))'),  # Directions       
-  'two_no_word'      :  ("Two No word",    r'(//)|(<=)|(>=)|(==)'),                                                                       # Non word
-  'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                     # Non word
-  'Id'               :  (Id,               r'(?:[a-zA-Z]_*)+')                                                                            # Identifiers      
+   'num'              :  (num,              r'(?:\d+)'),                                                                                   # Numbers      
+   'bool_value'       :  (bool_value,       r'(?:true(\W|\Z))|(?:false(\W|\Z))'),                                                          # Bool Values          
+  'type_id'          :  (type_id,          r'(?:int(\W|\Z))|(?:bool(\W|\Z))|(?:group(\W|\Z))|(?:array(\W|\Z))|(?:vector(\W|\Z))'),        # Type Identifiers                
+  'rpos'             :  (rpos,             r'(?:next(\W|\Z))|(?:prev(\W|\Z))'),                                                           # Relative Position          
+   'direc'            :  (direc,            r'(?:up_right(\W|\Z))|(?:down_right(\W|\Z))|(?:down_left(\W|\Z))|(?:up_left(\W|\Z))|(?:up(\W|\Z))|(?:right(\W|\Z))|(?:down(\W|\Z))|(?:left(\W|\Z))'),  # Directions       
+   'two_no_word'      :  ("Two No word",    r'(//)|(<=)|(>=)|(==)'),                                                                       # Non word
+   'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                     # Non word
+   'Id'               :  (Id,               r'(?:(([a-zA-Z]_*)+))')                                                                        # Identifiers      
 }
-  
+
+
+
 
 fixed_tokens = Trie()
 fixed_tokens['groups']              = groups
@@ -104,81 +103,90 @@ def tokenize(code,keywords,variable_tokens):
         ('MISMATCH', r'.'),            # Any other character
     ]
     token_specification = chain(map(lambda item : (item[0],item[1][1]),variable_tokens.items()),special_match)
-    tok_regex = '|'.join('(?P<%s>%s)' % pair for pair in token_specification)
+    tok_regex = re.compile('|'.join('(?P<%s>%s)' % pair for pair in token_specification))
     line_num = 1
     line_start = 0
     column = -1
     prev_prev_token = None
     prev_token = None
-    for mo in re.finditer(tok_regex, code):
-        kind = mo.lastgroup
-        value = mo.group()
-        column = mo.start() - line_start
-        if kind == 'num':
-            try:
-                value = int(value)
-                kind = num
-                if(prev_prev_token and prev_token and prev_token.token_type == minus and prev_prev_token.token_type not in [cpar, num, Id]):
-                    prev_token = None
-                    value = -value
-            except ValueError:
-                raise RuntimeError(f'{value!r} at {line_num} is not a valid number')
-        elif kind == 'bool_value':
-            kind = bool_value
-            if(value == 'true'):
-                value = True
-            else:
-                value = False
-        elif kind == 'direc':
-            kind = direc
-            if(value == 'up_right'):
-                value = (-1,1)
-            elif(value == 'right'):
-                value = (0,1)
-            elif(value == 'down_right'):
-                value = (1,1)
-            elif(value == 'down'):
-                value = (1,0)
-            elif(value == 'down_left'):
-                value = (1,-1)
-            elif(value == 'left'):
-                value = (0,-1)
-            elif(value == 'up_left'):
-                value = (-1,-1)
-            elif(value == 'up'):
-                value = (-1,0)
-        elif kind == 'Id' or kind == 'one_no_word' or kind == 'two_no_word':
-            try:
-                kind = keywords[value]
-            except:
-                if kind == 'Id':
-                    kind = Id
+    current_index = 0
+    while(current_index < len(code)):
+        step_back = False
+        
+        for mo in tok_regex.finditer( code,current_index):
+            kind = mo.lastgroup
+            value = mo.group()
+            column = mo.start() - line_start
+            current_index = mo.span()[1]
+            if kind == 'num':
+                try:
+                    value = int(value)
+                    kind = num
+                    if(prev_prev_token and prev_token and prev_token.token_type == minus and prev_prev_token.token_type not in [cpar, num, Id]):
+                        prev_token = None
+                        value = -value
+                except ValueError:
+                    raise RuntimeError(f'{value!r} at {line_num} is not a valid number')
+            elif kind == 'bool_value':
+                kind = bool_value
+                if(re.match(r'true(\W|\Z)',value)):
+                    value = True
                 else:
-                    raise RuntimeError(f'{value!r} unexpected on line {line_num}')
-        elif kind == 'NEWLINE':
-            line_start = mo.end()
-            line_num += 1
-            continue
-        elif kind == 'SKIP':
-            continue
-        elif kind == 'MISMATCH':
-            raise RuntimeError(f'{value!r} unexpected on line {line_num} at column {column}' )
-        else:
-            kind, _ =  variable_tokens[kind]
-        if(prev_prev_token):
-            yield prev_prev_token
-        prev_prev_token = prev_token
-        prev_token = Token(kind, value, line_num, column)
+                    value = False
+                step_back = True
+            elif kind == 'direc':
+                kind = direc
+                step_back = True
+                if(re.match(r'up_right(\W|\Z)',value)):
+                    value = (-1,1)
+                elif(re.match(r'right(\W|\Z)',value)):
+                    value = (0,1)
+                elif(re.match(r'down_right(\W|\Z)',value)):
+                    value = (1,1)
+                elif(re.match(r'down(\W|\Z)',value)):
+                    value = (1,0)
+                elif(re.match(r'down_left(\W|\Z)',value)):
+                    value = (1,-1)
+                elif(re.match(r'left(\W|\Z)',value)):
+                    value = (0,-1)
+                elif(re.match(r'up_left(\W|\Z)',value)):
+                    value = (-1,-1)
+                elif(re.match(r'up(\W|\Z)',value)):
+                    value = (-1,0)
+            elif kind == 'Id' or kind == 'one_no_word' or kind == 'two_no_word':
+                try:
+                    kind = keywords[value]
+                except:
+                    if kind == 'Id':
+                        kind = Id
+                    else:
+                        raise RuntimeError(f'{value!r} unexpected on line {line_num}')
+            elif kind == 'NEWLINE':
+                line_start = mo.end()
+                line_num += 1
+                continue
+            elif kind == 'SKIP':
+                continue
+            elif kind == 'MISMATCH':
+                raise RuntimeError(f'{value!r} unexpected on line {line_num} at column {column}' )
+            else:
+                kind, _ =  variable_tokens[kind]
+                if(re.search(r'\W\Z',value)):
+                    value = value[:len(value) - 1]
+                step_back = True
+            if(prev_prev_token):
+                yield prev_prev_token
+            prev_prev_token = prev_token
+            prev_token = Token(kind, value, line_num, column)
+            if(step_back):
+                current_index -= 1
+                break
     if(prev_prev_token):
         yield prev_prev_token
     if(prev_token):
         yield prev_token
+            
     yield Token(eof,'$',line_num,column + 1)
-
-code3 = r"""
-def algo()
-end
-"""
 
 code1 = r"""
 
@@ -209,12 +217,17 @@ def dos_columnas()
 
 groups
 
+
+
+    group_a = [1,2,3]
+       group_b =   [4,5]
+
 begin_with 5
-    line_up dos_filas with [1,2,3] in (0,0) heading up args()
-    line_up dos_columnas with [4,5] in (2,0) heading up_left args()
+    line_up dos_filas with group_a in (0,0) heading up args()
+    line_up dos_columnas with group_b in (2,0) heading up_left args()
 step
-    line_up dos_columnas with [1,2,3] in (0,0) heading up args()
-    line_up dos_filas with [4,5] in (0,2) heading up args()
+    line_up dos_columnas with group_a in (0,0) heading up args()
+    line_up dos_filas with group_b in (0,2) heading up args()
 end
 """
 
@@ -224,13 +237,39 @@ code2 = r"""
 """
 
 code3 = r"""
-groups
+    int+1
+    int algoint
 
 """
+code4 = r"""
+5 + 6
+"""
 
-tokens = tokenize(code1,fixed_tokens,variable_tokens)
+# pattern = re.compile(r'(?P<alias>(([a-zA-Z]_*)+))[ \t]*=[ \t]*(?P<value>\[(\d+,)*\d+\])')
+
+
+# start_index = re.search('groups',code1).span()[1]
+# end_index, start_replace = re.search('begin_with',code1).span()
+# repl = {}
+# for match in pattern.finditer(code1,start_index,endpos=end_index):
+#     repl[match.group('alias')] = match.group('value')
+
+# repl_pattern = '|'.join([f'({key})' for key in repl.keys()])
+# print(repl_pattern)
+# def create_repl_func(repl_dict):
+#     def repl_func(match):
+#         return repl_dict[match.group()]
+#     return repl_func
+# final = re.sub(repl_pattern,create_repl_func(repl),code1)
+# print(final)
+
+
+tokens = tokenize(code3,fixed_tokens,variable_tokens)
 for token in tokens:
     print(token)
+
+
+
 
 
 
