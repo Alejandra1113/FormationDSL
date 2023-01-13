@@ -12,7 +12,7 @@ return_term, continue_term, break_term = Gram.Terminals('return continue break')
 eof = Gram.EOF
 
 
-D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1, BRK = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1 BRK')
+D, P, P1, B, A, AS, BE, ELSE, R, RN, ARG, G, I, I2, C, E, T, F, V, ARR, ARR1, BRK, ARG1 = Gram.NonTerminals('D P P1 B A AS BE ELSE R RN ARG G I I2 C E T F V ARR ARR1 BRK ARG1')
 
 
 S = Gram.NonTerminal('S', True)
@@ -37,7 +37,7 @@ B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [Borrow
 B %= Id + obra + E + cbra + BE + of + Id + obra + E + cbra + B, lambda h, s: [LinkNode(GetIndexNode(
         VariableNode(s[1]), s[3]), GetIndexNode(VariableNode(s[7]), s[9]), s[5])] + s[11]
 B %= Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[1], s[3])] + s[5]
-B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[3], [VariableNode(s[1])] + s[5])] + s[6]
+B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [DynamicCallNode(s[3], VariableNode(s[1]), s[5])] + s[6]
 B %= Gram.Epsilon, lambda h, s: []
 B %= return_term, lambda h,s: [SpecialNode(s[1])] 
 
@@ -53,7 +53,7 @@ ELSE %= condelse + ocbra + B + BRK + ccbra, lambda h,s: [ConditionNode(None, s[3
 ELSE %= Gram.Epsilon, lambda h,s: []
 
 A %= type_id + Id + assign + AS, lambda h, s: VarDeclarationNode(s[2], s[1], s[4])
-A %= type_id + type_id + Id + assign + AS, lambda h, s: ArrayDeclarationNode(s[1], s[2], s[3], s[5])
+A %= type_id + obra + cbra + Id + assign + AS, lambda h, s: ArrayDeclarationNode(s[1], s[2], s[3], s[4])
 A %= Id + obra + E + cbra + assign + AS, lambda h, s: SetIndexNode(VariableNode(s[1]), s[3], s[6])
 A %= Id + assign + AS, lambda h, s: AssignNode(s[1], s[3])
 A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s: GroupVarDeclarationNode(s[1], s[2], VariableNode(s[5]), s[9], s[7])
@@ -61,10 +61,13 @@ A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s:
 AS %= Id + opar + ARG + cpar, lambda h, s: CallNode(s[1], s[3])
 AS %= BE, lambda h, s: s[1]
 AS %= obra + ARR + cbra, lambda h,s:  ArrayNode(s[2])
+AS %= Id + obra + E + cbra, lambda h,s:  GetIndexNode(VariableNode(s[1]), s[2])
+
 
 
 ARR %= E + ARR1, lambda h,s: [s[1]] + s[2]
 ARR %= Gram.Epsilon, lambda h, s: []
+
 ARR1 %= comma + E + ARR1, lambda h,s : [s[2]] + s[3] 
 ARR1 %= Gram.Epsilon, lambda h, s: []
 
@@ -77,9 +80,11 @@ RN %= Gram.Epsilon, lambda h, s: ([], [])
 RN %= R, lambda h, s: s[1]
 
 
-ARG %= BE + ARG, lambda h, s: [s[1]] + s[2]
-ARG %= comma + BE + ARG, lambda h, s: [s[2]] + s[3]
-ARG %= Gram.Epsilon, lambda h, s: []
+ARG %= BE + ARG1, lambda h, s: [s[1]] + s[2]
+ARG %= Gram.Epsilon, lambda h,s : [ ]
+
+ARG1 %= comma + BE + ARG1, lambda h, s: [s[2]] + s[3]
+ARG1 %= Gram.Epsilon, lambda h, s: []
 
 
 I %= obra + num + I2 + cbra, lambda h, s: ConstantNode([s[2]] + s[3], "group")
@@ -114,7 +119,7 @@ F %= bool_value, lambda h, s: ConstantNode(s[1], "boolean")
 F %= num, lambda h, s: ConstantNode(s[1], "int")
 F %= V, lambda h, s: s[1]
 F %= Id, lambda h, s: VariableNode(s[1])
-F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: CallNode(s[3], [VariableNode(s[1])] + s[5])
+F %= Id + dot + Id + opar + ARG + cpar, lambda h, s: DynamicCallNode(s[3], VariableNode(s[1]), s[5])
 F %= opar + BE + cpar, lambda h, s: s[2]
 F %= direc, lambda h, s: ConstantNode(s[1], "vector")
 

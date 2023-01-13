@@ -158,7 +158,12 @@ class InstantiateNode(AtomicNode):
 class SpecialNode(AtomicNode):
     pass
 
-
+class DynamicCallNode(AtomicNode):
+    def __init__(self, idx, head, args):
+        AtomicNode.__init__(self, idx)
+        self.head = head
+        self.args = args
+        
 class CallNode(AtomicNode):
     def __init__(self, idx, args):
         AtomicNode.__init__(self, idx)
