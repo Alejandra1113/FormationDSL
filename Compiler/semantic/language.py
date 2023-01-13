@@ -32,11 +32,10 @@ class ExpressionNode(Node):
 
 
 class FuncDeclarationNode(DeclarationNode):
-    def __init__(self, idx, params, body, return_type = None):
+    def __init__(self, idx, params, body):
         self.id = idx
         self.params = params
         self.body = body
-        self.return_type = return_type
 
 
 class StepNode(DeclarationNode):
@@ -50,15 +49,27 @@ class VarDeclarationNode(DeclarationNode):
         self.type = type
         self.expr = expr
 
+
 class ArrayDeclarationNode(DeclarationNode):
-    def __init__(self, type1, type2, id, expr):
-        self.type1 = type1
-        self.type2 = type2
+    def __init__(self, type, id, expr):
+        self.type = type
         self.id = id
         self.expr = expr
-        
+
+
+class TypeNode(DeclarationNode):
+    def __init__(self, name) -> None:
+        self.name = name
+
+
 class ParamNode(DeclarationNode):
-    def __init__(self,idx, type):
+    def __init__(self, idx, type):
+        self.idx = idx
+        self.type = type
+
+
+class ParamArrayNode(DeclarationNode):
+    def __init__(self, idx, type):
         self.idx = idx
         self.type = type
 
@@ -76,6 +87,11 @@ class LoopNode(StatementNode):
     def __init__(self, expr, body):
         self.expr = expr
         self.body = body
+
+
+class ArrayNode(StatementNode):
+    def __init__(self, elements):
+        self.elements = elements
 
 
 class IterNode(StatementNode):
@@ -116,9 +132,6 @@ class AtomicNode(ExpressionNode):
     def __init__(self, lex):
         self.lex = lex
 
-class AtomicNode(ExpressionNode):
-    def __init__(self, lex):
-        self.lex = lex
 
 class UnaryNode(ExpressionNode):
     def __init__(self, expr):
@@ -136,7 +149,6 @@ class TernaryNode(ExpressionNode):
         self.left = left
         self.right = right
         self.expr = expr
-        
 
 
 class ConstantNode(AtomicNode):
@@ -152,8 +164,17 @@ class VariableNode(AtomicNode):
 class InstantiateNode(AtomicNode):
     pass
 
+
 class SpecialNode(AtomicNode):
     pass
+
+
+class DynamicCallNode(AtomicNode):
+    def __init__(self, idx, head, args):
+        AtomicNode.__init__(self, idx)
+        self.head = head
+        self.args = args
+
 
 class CallNode(AtomicNode):
     def __init__(self, idx, args):
@@ -168,10 +189,6 @@ class BeginCallNode(AtomicNode):
         self.args = args
         self.poss = poss
         self.rot = rot
-
-
-class ArrayNode(InstantiateNode):
-    pass
 
 
 class NotNode(UnaryNode):

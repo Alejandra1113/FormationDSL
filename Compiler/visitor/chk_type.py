@@ -60,6 +60,14 @@ class TypeCheckerVisitor(object):
         util.update_errs(errors, expr_err)
         return None, errors if len(errors) else None
 
+    @when(ArrayDeclarationNode)
+    def visit(self, node: ArrayDeclarationNode, context: OtherContext, index: int = 0):
+        errors = []
+        expr_type, expr_err = self.visit(node.expr, context, index)
+        util.update_err_type(errors, node.type2, expr_type)
+        util.update_errs(errors, expr_err)
+        return None, errors if len(errors) else None
+
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
@@ -126,6 +134,10 @@ class TypeCheckerVisitor(object):
     @when(ConstantNode)
     def visit(self, node: ConstantNode, context: OtherContext, index: int = 0):
         return node.type, None
+    
+    @when(SpecialNode)
+    def visit(self, node: SpecialNode, context: OtherContext, index: int = 0):
+        return None, None
 
     @when(VariableNode)
     def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
@@ -145,7 +157,7 @@ class TypeCheckerVisitor(object):
     def visit(self, node: SetIndexNode, context: OtherContext, index: int = 0):
         errors = []
         type_var = context.get_variable_info(node.id).type
-        util.update_err_type(errors, "Array", type_var)
+        util.update_err_type(errors, "array", type_var)
         expr_type, expr_err = self.visit(node.expr, context, index)
         if not len(errors):
             type_index = type_var.type
@@ -163,11 +175,12 @@ class TypeCheckerVisitor(object):
         errors = []
         return_type = "error"
         funcs_info = context.get_all_func_info(node.lex, len(args))
-        if not util.exist_func(args, funcs_info):
+        exist, info = util.exist_func(args, funcs_info)
+        if not exist:
             err_args = "".join([f"{arg}, " for arg in args[:-1]] + [args[-1]])
             errors.append(f"el método {node.lex}({err_args}) no existe")
         else:
-            return_type = funcs_info.return_type
+            return_type = info.return_type
         return return_type, errors if len(errors) else None
 
     @when(BeginCallNode)
@@ -179,7 +192,8 @@ class TypeCheckerVisitor(object):
 
         errors = []
         funcs_info = context.get_all_func_info(node.lex, len(args))
-        if not util.exist_func(args, funcs_info):
+        exist, _ = util.exist_func(args, funcs_info)
+        if not exist:
             err_args = "".join([f"{arg}, " for arg in args[:-1]] + [args[-1]])
             errors.append(f"el método {node.lex}({err_args}) no existe")
 
@@ -192,9 +206,18 @@ class TypeCheckerVisitor(object):
         util.update_errs(errors, rot_err)
         return None, errors if len(errors) else None
 
-    # @when(ArrayNode)
-    # def visit(self, node: ArrayNode, context: OtherContext, index: int):
-    #     pass
+    @when(ArrayNode)
+    def visit(self, node: ArrayNode, context: OtherContext, index: int):
+        errors = []
+        expr_type, expr_err = self.visit(node.elements[0], context, index)
+        util.update_errs(errors, expr_err)
+        for child in node.elements[1:]:
+            child_type, child_err = self.visit(child, context, index)
+            expr_type = util.update_err_type(errors, expr_type, child_type)
+            util.update_errs(errors, child_err)
+        
+        return_type = "error" if expr_type == "error" else "array"
+        return return_type, errors if len(errors) else None
 
     @when(NotNode)
     def visit(self, node: NotNode, context: OtherContext, index: int):

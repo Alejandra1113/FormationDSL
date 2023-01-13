@@ -59,6 +59,10 @@ class ScopeCheckerVisitor(object):
     def visit(self, node: VarDeclarationNode, context: OtherContext, index: int = 0):
         return None
 
+    @when(ArrayDeclarationNode)
+    def visit(self, node: ArrayDeclarationNode, context: OtherContext, index: int = 0):
+        return None
+
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, context: OtherContext, index: int = 0):
         return None

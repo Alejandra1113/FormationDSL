@@ -45,7 +45,7 @@ class ShiftReduceParser:
             try:
                 action, tag = self.action[(state, lookahead.token_type.Name)]
             except:
-                self.error(f"Unexpected token {lookahead.token_type.lex} en la fila {lookahead.row}, columna {lookahead.column}")
+                self.error(f"Unexpected token {lookahead.token_type.Name} en la fila {lookahead.row}, columna {lookahead.column}")
             
             
             if action == ShiftReduceParser.SHIFT:
