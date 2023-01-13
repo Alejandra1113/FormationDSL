@@ -62,6 +62,17 @@ class SemanticCheckerVisitor(object):
         util.update_errs(errors, expr_err)
         return errors if len(errors) else None
 
+    @when(ArrayDeclarationNode)
+    def visit(self, node: ArrayDeclarationNode, context: OtherContext, index: int = 0):
+        errors = []
+        if context.is_var_defined(node.id):
+            errors.append(f"variable {node.id} está ya definida")
+        else:
+            context.define_variable(node.id, node.type2)
+        expr_err = self.visit(node.expr, context, index)
+        util.update_errs(errors, expr_err)
+        return errors if len(errors) else None
+
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
@@ -86,6 +97,14 @@ class SemanticCheckerVisitor(object):
         new_context = context.get_context(index)
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
+            util.update_errs(errors, child_err)
+        return errors if len(errors) else None
+
+    @when(ArrayNode)
+    def visit(self, node: ArrayNode, context: OtherContext, index: int = 0):
+        errors = []
+        for child in node.elements:
+            child_err = self.visit(child, context, index)
             util.update_errs(errors, child_err)
         return errors if len(errors) else None
 
@@ -136,11 +155,28 @@ class SemanticCheckerVisitor(object):
             return [f"variable {node.lex} no esta definida"]
         return None
 
+    @when(SpecialNode)
+    def visit(self, node: SpecialNode, context: OtherContext, index: int = 0):
+        return None
+
     @when(AssignNode)
     def visit(self, node: AssignNode, context: OtherContext, index: int = 0):
         errors = []
         if not context.is_var_defined(node.lex):
             errors.append(f"variable {node.lex} no esta definida")
+
+        expr_err = self.visit(node.expr, context, index)
+        util.update_errs(errors, expr_err)
+        return errors
+
+    @when(SetIndexNode)
+    def visit(self, node: SetIndexNode, context: OtherContext, index: int = 0):
+        errors = []
+        if not context.is_var_defined(node.id):
+            errors.append(f"variable {node.id} no esta definida")
+
+        index_err = self.visit(node.index, context, index)
+        util.update_errs(errors, index_err)
 
         expr_err = self.visit(node.expr, context, index)
         util.update_errs(errors, expr_err)

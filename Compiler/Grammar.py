@@ -53,7 +53,7 @@ ELSE %= condelse + ocbra + B + BRK + ccbra, lambda h,s: [ConditionNode(None, s[3
 ELSE %= Gram.Epsilon, lambda h,s: []
 
 A %= type_id + Id + assign + AS, lambda h, s: VarDeclarationNode(s[2], s[1], s[4])
-A %= type_id + type_id + Id + assign + AS, lambda h, s: ArrayDeclarationNode(s[1], s[2], s[3], s[4])
+A %= type_id + type_id + Id + assign + AS, lambda h, s: ArrayDeclarationNode(s[1], s[2], s[3], s[5])
 A %= Id + obra + E + cbra + assign + AS, lambda h, s: SetIndexNode(VariableNode(s[1]), s[3], s[6])
 A %= Id + assign + AS, lambda h, s: AssignNode(s[1], s[3])
 A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s: GroupVarDeclarationNode(s[1], s[2], VariableNode(s[5]), s[9], s[7])
@@ -82,7 +82,7 @@ ARG %= comma + BE + ARG, lambda h, s: [s[2]] + s[3]
 ARG %= Gram.Epsilon, lambda h, s: []
 
 
-I %= obra + num + I2 + cbra, lambda h, s: ConstantNode([s[2]] + s[3], "array")
+I %= obra + num + I2 + cbra, lambda h, s: ConstantNode([s[2]] + s[3], "group")
 I %= obra + num + two_points + num + cbra, lambda h, s: SliceNode(s[2], s[4])
 
 I2 %= comma + num + I2, lambda h, s: [s[2]] + s[3]

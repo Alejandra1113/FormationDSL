@@ -187,5 +187,5 @@ def check_types(args_1, args_2):
 def exist_func(args, funcs):
     for info in funcs:
         if check_types(args, info.params):
-            return True
-    return False
+            return True, info
+    return False, None

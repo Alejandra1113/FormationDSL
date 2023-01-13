@@ -1,4 +1,5 @@
-
+from itertools import chain
+from Compiler.semantic.types import *
 
 __all__ = ['ProgramContext', 'Context', 'DefineContext',
            'OtherContext', 'BeginContext', 'StepContext']
@@ -8,18 +9,6 @@ class SemanticError(Exception):
     @property
     def text(self):
         return self.args[0]
-
-
-class VariableInfo:
-    def __init__(self, name, type):
-        self.name = name
-        self.type = type
-
-
-class FunctionInfo:
-    def __init__(self, name, params):
-        self.name = name
-        self.params = params
 
 
 class ProgramContext:
@@ -34,9 +23,10 @@ class ProgramContext:
 
     def get_func_info(self, fname, params):
         return self.define_context.get_func_info(fname, params)
-    
+
     def get_all_func_info(self, fname, params):
         return self.define_context.get_all_func_info(fname, params)
+
 
 class Context:
     def __init__(self, parent=None):
@@ -75,10 +65,8 @@ class DefineContext(Context):
 
     def is_local_func(self, fname, params):
         if type(params) is int:
-            self.get_all_local_function_info(fname, params) is not None
-        else:
-            self.get_local_function_info(fname, params) is not None
-        return
+            return len(self.get_all_local_function_info(fname, params))
+        return self.get_local_function_info(fname, params) is not None
 
     def get_all_local_function_info(self, fname, n):
         funcs = []
