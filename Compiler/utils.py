@@ -166,9 +166,26 @@ def tokenizer(G, fixed_tokens):
     return decorate
 
 def update_err_type(errors, set_type, get_type):
-    if set_type != get_type:
+    if set_type != get_type and get_type != "error":
         errors.append(f"error de tipo, esta tratando de guardar un {get_type} en {set_type}")
+        return "error"
+    if get_type == "error":
+        return "error"
+    return get_type
 
 def update_errs(errors, new_errs):
     if new_errs:
         errors += new_errs
+
+def check_types(args_1, args_2):
+    for get_type, set_arg in zip(args_1, args_2):
+        set_type = set_arg.type
+        if set_type != get_type:
+            return False
+    return True
+
+def exist_func(args, funcs):
+    for info in funcs:
+        if check_types(args, info.params):
+            return True
+    return False

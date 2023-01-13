@@ -82,7 +82,7 @@ class ShiftReduceParser:
                 output.append(prod)
 
             elif action == ShiftReduceParser.OK:
-                if next(w) != self.G.eof :
+                if lookahead.token_type.Name != self.G.EOF.Name :
                     self.error("Bad EOF")
                 return output, ast[0]
             else:

@@ -32,10 +32,11 @@ class ExpressionNode(Node):
 
 
 class FuncDeclarationNode(DeclarationNode):
-    def __init__(self, idx, params, body):
+    def __init__(self, idx, params, body, return_type = None):
         self.id = idx
         self.params = params
         self.body = body
+        self.return_type = return_type
 
 
 class StepNode(DeclarationNode):
@@ -111,6 +112,7 @@ class SetIndexNode(ExpressionNode):
         self.expr = expr
 
 
+class AtomicNode(ExpressionNode):
     def __init__(self, lex):
         self.lex = lex
 
@@ -138,7 +140,9 @@ class TernaryNode(ExpressionNode):
 
 
 class ConstantNode(AtomicNode):
-    pass
+    def __init__(self, lex, type):
+        AtomicNode.__init__(self, lex)
+        self.type = type
 
 
 class VariableNode(AtomicNode):
@@ -160,6 +164,7 @@ class CallNode(AtomicNode):
 class BeginCallNode(AtomicNode):
     def __init__(self, idx, poss, rot, args):
         AtomicNode.__init__(self, idx)
+        args[0]
         self.args = args
         self.poss = poss
         self.rot = rot
@@ -197,11 +202,15 @@ class VectNode(BinaryNode):
     pass
 
 
-class AndNode(BinaryNode):
+class BinaryLogicNode(BinaryNode):
     pass
 
 
-class OrNode(BinaryNode):
+class AndNode(BinaryLogicNode):
+    pass
+
+
+class OrNode(BinaryLogicNode):
     pass
 
 
@@ -209,19 +218,23 @@ class EqNode(BinaryNode):
     pass
 
 
-class EqlNode(BinaryNode):
+class NonEqNode(BinaryNode):
     pass
 
 
-class EqgNode(BinaryNode):
+class EqlNode(NonEqNode):
     pass
 
 
-class GtNode(BinaryNode):
+class EqgNode(NonEqNode):
     pass
 
 
-class LtNode(BinaryNode):
+class GtNode(NonEqNode):
+    pass
+
+
+class LtNode(NonEqNode):
     pass
 
 
