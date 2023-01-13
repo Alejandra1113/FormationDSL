@@ -10,15 +10,6 @@ class SemanticError(Exception):
         return self.args[0]
 
 
-def check_params(params_1, params_2):
-    if len(params_1) != len(params_2):
-        return False
-    for get_arg, set_arg in zip(params_1, params_2):
-        if set_arg.type != get_arg.type:
-            return False
-    return True
-
-
 class VariableInfo:
     def __init__(self, name, type):
         self.name = name
@@ -43,7 +34,9 @@ class ProgramContext:
 
     def get_func_info(self, fname, params):
         return self.define_context.get_func_info(fname, params)
-
+    
+    def get_all_func_info(self, fname, params):
+        return self.define_context.get_all_func_info(fname, params)
 
 class Context:
     def __init__(self, parent=None):
@@ -77,12 +70,33 @@ class DefineContext(Context):
     def get_func_info(self, fname, params):
         return self.get_local_function_info(fname, params)
 
+    def get_all_func_info(self, fname, params):
+        return self.get_all_local_function_info(fname, params)
+
     def is_local_func(self, fname, params):
-        return self.get_local_function_info(fname, params) is not None
+        if type(params) is int:
+            self.get_all_local_function_info(fname, params) is not None
+        else:
+            self.get_local_function_info(fname, params) is not None
+        return
+
+    def get_all_local_function_info(self, fname, n):
+        funcs = []
+        for info in self.local_funcs:
+            if info.name != fname or len(info.params) != n:
+                continue
+            funcs.append(info)
+        return funcs
 
     def get_local_function_info(self, fname, params):
         for info in self.local_funcs:
-            if info.name == fname and check_params(info.params, params):
+            if info.name != fname or len(info.params) != len(params):
+                continue
+            all_check = True
+            for arg_1, arg_2 in zip(info.params, params):
+                if arg_1.type != arg_2.type:
+                    all_check = False
+            if all_check:
                 return info
         return None
 
@@ -98,6 +112,9 @@ class OtherContext(Context):
 
     def get_func_info(self, fname, params):
         return self.parent.get_func_info(fname, params)
+
+    def get_all_func_info(self, fname, params):
+        return self.parent.get_all_func_info(fname, params)
 
     def define_variable(self, vname, vtype):
         if not self.is_var_defined(vname):
@@ -143,6 +160,9 @@ class BeginContext(Context):
     def get_func_info(self, fname, params):
         return self.parent.get_func_info(fname, params)
 
+    def get_all_func_info(self, fname, params):
+        return self.parent.get_all_func_info(fname, params)
+
 
 class StepContext(Context):
     def __init__(self, parent=None, count=0):
@@ -157,6 +177,9 @@ class StepContext(Context):
 
     def get_func_info(self, fname, params):
         return self.parent.get_func_info(fname, params)
+
+    def get_all_func_info(self, fname, params):
+        return self.parent.get_all_func_info(fname, params)
 
     def is_full(self):
         return len(self.local_members) >= self.count

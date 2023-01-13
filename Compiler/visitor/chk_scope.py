@@ -49,6 +49,7 @@ class ScopeCheckerVisitor(object):
         else:
             context.define_function(node.id, node.params)
         new_context = context.create_child_context(index)
+        new_context.define_variable("G", "group")
         for i, child in enumerate(node.body):
             child_err = self.visit(child, new_context, i)
             util.update_errs(errors, child_err)

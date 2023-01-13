@@ -149,7 +149,7 @@ class SemanticCheckerVisitor(object):
     @when(CallNode)
     def visit(self, node: CallNode, context: OtherContext, index: int = 0):
         errors = []
-        if not context.is_func_defined(node.lex, node.args):
+        if not context.is_func_defined(node.lex, len(node.args)):
             errors.append(
                 f"funcion {node.lex} no esta definida con {len(node.args)} argumentos")
         for arg in node.args:
@@ -160,7 +160,7 @@ class SemanticCheckerVisitor(object):
     @when(BeginCallNode)
     def visit(self, node: BeginCallNode, context: OtherContext, index: int = 0):
         errors = []
-        if not context.is_func_defined(node.lex, node.args):
+        if not context.is_func_defined(node.lex, len(node.args)):
             errors.append(
                 f"funcion {node.lex} no esta definida con {len(node.args)} argumentos")
         for arg in node.args:
