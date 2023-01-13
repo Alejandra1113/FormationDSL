@@ -1,9 +1,9 @@
 from pycompiler import Grammar, Terminal, NonTerminal, EOF, Epsilon
-from semantic.language import *
+from Compiler.semantic.language import *
 
 Gram = Grammar()
 comma, plus, minus, star, div, opar, cpar, lt, gt, lte = Gram.Terminals(', + - * / ( ) < > <=')
-gte, eq, andop, orop, notop, dot, ocbra, ccbra, two_points = Gram.Terminals('>= == & %= ! . { } :')
+gte ,eq ,andop ,orop ,notop ,dot ,ocbra ,ccbra, two_points = Gram.Terminals('>= == & | ! . { } :')
 rem, wloop, deff, condif, condelse, iter_aof, groups, obra, cbra = Gram.Terminals('% while def if else all_of groups [ ]')
 at, of, from_op, borrow, st_at, to, lineup, step, heading = Gram.Terminals('at of from borrow st_at to lineup step heading')
 args, take, with_op, definition, begin_with, end, assign, in_op = Gram.Terminals('args take with definition begin_with end = in')
@@ -34,7 +34,7 @@ B %= wloop + opar + BE + cpar + ocbra + B + BRK + ccbra + B, lambda h, s: [LoopN
 B %= condif + opar + BE + cpar + ocbra + B + BRK + ccbra + ELSE + B, lambda h, s: [ConditionNode(s[3], s[6] + s[7])] + s[9] + s[10]
 B %= iter_aof + Id + at + BE + of + rpos + B, lambda h, s: [IterNode(VariableNode(s[2]), s[4], s[6])] + s[7]
 B %= from_op + Id + borrow + BE + st_at + BE + to + Id + B, lambda h, s: [BorrowNode(VariableNode(s[2]), VariableNode(s[8]), s[4], s[5])] + s[9]
-B %= Id + obra + BE + cbra + BE + of + Id + obra + BE + cbra + B, lambda h, s: [LinkNode(GetIndexNode(
+B %= Id + obra + E + cbra + BE + of + Id + obra + E + cbra + B, lambda h, s: [LinkNode(GetIndexNode(
         VariableNode(s[1]), s[3]), GetIndexNode(VariableNode(s[7]), s[9]), s[5])] + s[11]
 B %= Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[1], s[3])] + s[5]
 B %= Id + dot + Id + opar + ARG + cpar + B, lambda h, s: [CallNode(s[3], [VariableNode(s[1])] + s[5])] + s[6]
@@ -58,14 +58,14 @@ A %= Id + obra + E + cbra + assign + AS, lambda h, s: SetIndexNode(VariableNode(
 A %= Id + assign + AS, lambda h, s: AssignNode(s[1], s[3])
 A %= type_id + Id + assign + from_op + Id + take + BE + st_at + BE, lambda h, s: GroupVarDeclarationNode(s[1], s[2], VariableNode(s[5]), s[9], s[7])
 
-AS %= Id + obra + ARG + cbra, lambda h, s: CallNode(s[1], s[3])
+AS %= Id + opar + ARG + cpar, lambda h, s: CallNode(s[1], s[3])
 AS %= BE, lambda h, s: s[1]
 AS %= obra + ARR + cbra, lambda h,s:  ArrayNode(s[2])
 
 
-ARR %= BE + ARR1, lambda h,s: [s[1]] + s[2]
+ARR %= E + ARR1, lambda h,s: [s[1]] + s[2]
 ARR %= Gram.Epsilon, lambda h, s: []
-ARR1 %= comma + BE + ARR1, lambda h,s : [s[2]] + s[3] 
+ARR1 %= comma + E + ARR1, lambda h,s : [s[2]] + s[3] 
 ARR1 %= Gram.Epsilon, lambda h, s: []
 
 R %= lineup + Id + with_op + I + in_op + BE + heading + direc + args + opar + ARG + cpar + RN, lambda h, s: ([BeginCallNode(
@@ -81,7 +81,6 @@ ARG %= BE + ARG, lambda h, s: [s[1]] + s[2]
 ARG %= comma + BE + ARG, lambda h, s: [s[2]] + s[3]
 ARG %= Gram.Epsilon, lambda h, s: []
 
-G %= Id + assign + I, lambda h, s: AssignNode(s[1], s[3])
 
 I %= obra + num + I2 + cbra, lambda h, s: ConstantNode([s[2]] + s[3], "array")
 I %= obra + num + two_points + num + cbra, lambda h, s: SliceNode(s[2], s[4])
