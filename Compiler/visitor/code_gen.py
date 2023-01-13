@@ -19,8 +19,9 @@ def replace(dict,code):
 
 
 init_code = """
+from unittest import result
 from IA.formations import Formation
-from entities.utils import DIRECTIONS, direction_to_int, direction_to_tuple, int_to_direction
+from entities.utils import DIRECTIONS, direction_to_int, direction_to_tuple, int_to_direction,dir_tuple
 from enum import Enum
 
 rpos = Enum('rpos', 'next prev')
@@ -38,6 +39,7 @@ class SimpleFormationNode:
         self.position = None
         self.childs = []
         self.direction_var = direction_var
+        self.last_visit = 0
 
     def add_child(self,node,rel):
         real_rel = SimpleFormationNode.rot_rel(rel,self.direction_var.value)
@@ -53,10 +55,10 @@ class SimpleFormationNode:
 
     def create_formation(count):
         dir_var = DirectionVar()
- = []
+        result = []
         for _ in range(count):
-    .append(SimpleFormationNode(dir_var))
-        retur
+            result.append(SimpleFormationNode(dir_var))
+        return result
 
     def rot_rel(rel,direction):
         i,j = rel
@@ -71,6 +73,54 @@ class DirectionVar:
     def __init__(self,direction = DIRECTIONS.N):
         self.value = direction
 
+class PosRunner:
+    def __init__(self):
+        self.last_run = 0
+
+    def set_and_check_positions(self,origin : SimpleFormationNode, pos):
+        if(origin.position):
+            if(pos != origin.position):
+                raise InconsistentNodeException("Two diferent positions were resolved for this node")
+        else:
+            origin.position = pos
+        self.last_run += 1
+        origin.last_visit = self.last_run
+        self.inner_set_and_check_positions(origin)
+
+    def inner_set_and_check_positions(self,origin : SimpleFormationNode):
+        for child, rel in origin.childs:
+            if(child.position):
+                if(sum_vec(origin.position,rel) != child.position):
+                    raise InconsistentNodeException("Two diferent positions were resolved for this node")
+                elif(child.last_visit == self.last_run):
+                    continue
+            else:
+                child.position = sum_vec(origin.position,rel)
+            child.last_visit = self.last_run
+            self.inner_set_and_check_positions(child)
+
+def dos_filas(group,direction):
+    old_dir = group[0].direction
+    group[0].direction = direction
+    temp = len(group)//2
+    resto = len(group)%2
+    i = 0
+    while(i < temp + resto):
+        if(i < temp):
+            group[temp + i].add_child(group[i],(1,0))
+            group[i].add_child(group[temp + i],(-1,0))
+        
+        if(i > 0):
+            group[temp + i - 1].add_child(group[temp + i],(0,1))
+            group[temp + i].add_child(group[temp + i - 1],(0,-1))
+        i += 1
+    group[0].direction = old_dir
+
+def borrow(src_list,dst_list,length,starting_at):
+    for i in range(starting_at,starting_at + length):
+        dst_list.append(src_list.pop(i))
+
+
 def sum_vec(a,b):
     x_a, y_a = a
     x_b, y_b = b
@@ -84,31 +134,23 @@ def of_rel(node_a,node_b,vec):
     node_a.add_child(node_b,vec)
     node_b.add_child(node_a,scalar_product(vec,-1))
 
-def borrow(group_src,group_dst,start_index,len):
-    group_dst += group_src[start_index:start_index + len]
-    group_src[start_index:start_index + len] = []
-
-def set_and_check_postions(origin : SimpleFormationNode):
-    if(not origin.position):
-        raise IncompleteNodeException("The start node must have a position")
-    for child, rel in origin.childs:
-        if(child.position):
-            if(sum_vec(origin.position,rel) != child.position):
-                raise InconsistentNodeException("Two diferent positions were resolved for this node")
-        else:
-            child.position = sum_vec(origin.position,rel)
-            set_and_check_postions(child)
 """
 
-start_step_code = 'G = SimpleFormationNode.create_formation(<count>)'
+start_step_code = """G = SimpleFormationNode.create_formation(<count>)
+runner = PosRunner()"""
 
-func_def_code = 'def <id>(<params>):\n <body>'
+
+func_def_code = """def <id>(<params>,rot):
+<tab>old_dir = group[0].direction
+<tab>group[0].direction = direction
+<body><tab>group[0].direction = old_dir
+"""
 
 param_code = '<id>'
 
 assign_code = '<id> = <value>'
 
-take_code = '<id> = []\nborrow(<src>,<id>,<init>,<len>)'
+take_code = '<id> = []\n<tab>borrow(<src>,<id>,<init>,<len>)'
 
 declaration_code = '<id> = None'
 
@@ -140,15 +182,20 @@ call_code = '<id>(<params>)'
 
 change_line_code = '\n'
 
+line_up_code = """<id>(<args>,dir_tuple[<rot>])
+<tab>runner.set_and_check_positions(<origin>,<pos>)
+"""
+array_code = '[<content>]'
+
 
 class CodeGenVisitor(object):
     def __init__(self,init_code,start_step_code,func_def_code
                 ,param_code,assign_code ,take_code,declaration_code
                 ,while_code, borrow_code, if_code,var_code,vec_code
                 ,true_code, false_code, const_arr_code, set_index_code
-                ,return_code, break_code, continue_code,call_code,change_line_code):
+                ,return_code, break_code, continue_code,call_code,change_line_code
+                ,line_up_code, array_code):
         self.init_code = init_code
-        #todos reciben el tab
         #keyword (<count>: cantidad de individuos)
         self.start_step_code = start_step_code
         #keyword (<id>: nombre de la funcion, <params>: nombre de los parametros, <body>: el cuerpo)
@@ -195,6 +242,22 @@ class CodeGenVisitor(object):
         #        (<params>: los argumentos separados por coma)
         self.call_code = call_code
         self.change_line_code = change_line_code
+        #keyword (<id>: nombre de la fomracion)
+        #        (<args>: argumentos de la formacion)
+        #        (<rot>: rotacion) 
+        #        (<origin>: el nodo que es centro de la formacion)
+        #        (<pos>: la posición donde se va a poner el centro)
+        self.line_up_code = line_up_code
+        #keyword (<content>: las expresiones con las que se inicializa el array)
+        self.array_code = array_code
+
+    def build_body_arr(self,body,current_depth):
+        result_body = []
+        for line in body:
+            result_body.append('\t'*current_depth)
+            result_body.append(self.visit(line,current_depth))
+            result_body.append(self.change_line_code)
+        return result_body
 
     @on('node')
     def visit(self, node,depth):
@@ -211,26 +274,21 @@ class CodeGenVisitor(object):
 
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, depth: int = 0):
-        result = []
-        for child in node.functions:
-            result.append(self.visit(child,depth))
-        return ''.join(result)
+            
+        return ''.join([self.visit(child,depth) for child in node.functions])
 
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, depth: int = 0):
-        result = []
-        for child in node.step:
-            result.append(self.visit(child,depth,node.num))
-        return ''.join(result)
+        return ''.join([self.visit(child,depth,node.num) for child in node.step])
 
     @when(StepNode)
     def visit(self, node: StepNode, depth: int = 0,count: int = 0):
         
-        result = [replace({'<tab>' : '\t'*depth
-                          ,'<count>':count}
+        result = ['\t'*depth,replace({'<count>':count}
                           ,self.start_step_code)]
         # node.body una lista de begin call node
         for call in node.body:
+            result.append('\t'*depth)
             result.append(self.visit(call,depth,count))
         return self.change_line_code.join(result) + self.change_line_code
 
@@ -241,36 +299,30 @@ class CodeGenVisitor(object):
         # node.params.idx
         # node.params.type
         # node.body
-        result = [replace({'<tab>' : '\t'*depth
-                          ,'<id>': node.idx 
-                          ,'<params>': ','.join([self.visit(prm,depth) for prm in node.params])
-                          ,'<body>': self.change_line_code.join([self.visit(line,depth + 1) for line in node.body]) + self.change_line_code }
-                          ,self.func_def_code)]
-        for line in node.body:
-            result.append(self.visit(line,depth + 1))
-            result.append(self.change_line_code)
-        return ''.join(result)
+        body = self.build_body_arr(node.body,depth + 1)
+        return replace({'<tab>': '\t'*(depth + 1)
+                       ,'<id>': node.idx 
+                       ,'<params>': ','.join([self.visit(prm,depth) for prm in node.params])
+                       ,'<body>': ''.join(body)}
+                       ,self.func_def_code)
 
     @when(ParamNode)
     def visit(self,node: ParamNode,depth):
-        return replace({'<tab>' : '\t'*depth
-                       ,'<id>':node.idx
+        return replace({'<id>':node.idx
                        ,'<type>': node.type}
                        ,self.param_code)      
 
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode , depth: int = 0):
-        return replace({'<tab>': '\t'*depth
-                       ,'<id>' : node.id
+        return replace({'<id>' : node.id
                        ,'<type>':node.type}
                        ,self.declaration_code)
 
     @when(AssignNode)
     def visit(self,node: AssignNode, depth: int = 0):
-        return replace({'<tab>': '\t'*depth
-                        ,'<id>' : self.visit(node.id,depth)
-                        ,'<value>': self.visit(node.expr,depth)}
-        ,self.assign_code )
+        return replace({'<id>' : self.visit(node.id,depth)
+                       ,'<value>': self.visit(node.expr,depth)}
+                       ,self.assign_code )
 
 
     @when(GroupVarDeclarationNode)
@@ -289,28 +341,31 @@ class CodeGenVisitor(object):
                        , self.take_code)
     @when(LoopNode)
     def visit(self, node: LoopNode, depth: int = 0):
+        body = self.build_body_arr(node.body,depth + 1)
         return replace({'<cond>': self.visit(node.expr,depth)
-                       ,'<body>': self.change_line_code.join([self.visit(line,depth + 1)for line in node.body]) + self.change_line_code}
+                       ,'<body>': ''.join(body)}
                        ,self.while_code)
 
     @when(BorrowNode)
     def visit(self, node: BorrowNode, depth: int = 0):
         return replace({'<src>' :  self.visit(node.from_collec,depth)
                        ,'<dst>' :  self.visit(node.to_collec,depth)
-                       ,'<init>': self.visit(node.init,depth)
+                       ,'<init>':  self.visit(node.init,depth)
                        ,'<len>' :  self.visit(node.len,depth)}
                        ,self.borrow_code)
 
     @when(ConditionNode)
     def visit(self, node: ConditionNode, depth: int = 0):
+        body = self.build_body_arr(node.body,depth + 1)
         return replace({'<cond>': self.visit(node.expr,depth)
-                       ,'<body>': self.change_line_code.join([self.visit(line,depth + 1)for line in node.body]) + self.change_line_code}
+                       ,'<body>': ''.join(body)}
                        , self.if_code)
     
 
     @when(ArrayDeclarationNode)
     def visit(self,node: ArrayDeclarationNode,depth: int = 0):
-        pass
+        return replace({'<id>': node.id
+                       ,'<value>': self.visit(node.expr,depth)})
         
     @when(SetIndexNode)
     def visit(self,node: SetIndexNode,depth: int = 0):
@@ -347,24 +402,29 @@ class CodeGenVisitor(object):
         elif(node.lex == 'break'):
             return self.break_code
         return self.continue_code
-
+        
     @when(CallNode)
     def visit(self,node: CallNode, depth: int = 0):
         return replace({'<id>': node.lex
                        ,'<params>': ','.join([self.visit(arg,depth) for arg in node.args])}
                        ,self.call_code)
 
-    class BeginCallNode(AtomicNode):
-        def __init__(self, idx, poss, rot, args):
-            AtomicNode.__init__(self, idx)
-            args[0]
-            self.args = args
-            self.poss = poss
-            self.rot = rot
+    @when(BeginCallNode)
+    def view(self,node:BeginCallNode,depth):
+        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index,'num')) for index in node.args[0]]))
+        args = [self.visit(item,depth) for item in node.args[1:]].insert(0,first_arg)
+        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0],'num')),depth)
+        return replace({'<id>': node.lex
+                       ,'<args>': ','.join(args)
+                       ,'<rot>': self.visit(node.rot,depth)
+                       ,'<tab>': '\t'*depth
+                       ,'<origin>': origin
+                       ,'<pos>': self.visit(node.poss,depth)}
+                       ,self.line_up_code)
 
-
-    class ArrayNode(InstantiateNode):
-        pass
+    @when(ArrayNode)
+    def visit(self,node:ArrayNode,depth)
+        return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.lex])})
 
 
     @when(NotNode)
