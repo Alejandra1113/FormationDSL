@@ -1,5 +1,6 @@
-import Compiler.utils as util
+from Compiler.semantic.types import Bool, Group, Int, NodeType, Array, Vector
 from Compiler.semantic.language import *
+import Compiler.utils as util
 from .visitor import *
 from ._def import *
 
@@ -34,15 +35,6 @@ class TypeCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return None, errors
 
-    @when(StepNode)
-    def visit(self, node: StepNode, context: BeginContext, index: int = 0):
-        errors = []
-        new_context = context.get_context(index)
-        for child in node.instructions:
-            _, child_err = self.visit(child, new_context, index)
-            util.update_errs(errors, child_err)
-        return None, errors
-
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, context: DefineContext, index: int = 0):
         errors = []
@@ -52,11 +44,21 @@ class TypeCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return None, errors if len(errors) else None
 
+    @when(StepNode)
+    def visit(self, node: StepNode, context: BeginContext, index: int = 0):
+        errors = []
+        new_context = context.get_context(index)
+        for child in node.instructions:
+            _, child_err = self.visit(child, new_context, index)
+            util.update_errs(errors, child_err)
+        return None, errors
+
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
         expr_type, expr_err = self.visit(node.expr, context, index)
-        util.update_err_type(errors, node.type, expr_type)
+        var_type = context.get_variable_info(node.id).type
+        util.update_err_type(errors, var_type, expr_type)
         util.update_errs(errors, expr_err)
         return None, errors if len(errors) else None
 
@@ -64,23 +66,25 @@ class TypeCheckerVisitor(object):
     def visit(self, node: ArrayDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
         expr_type, expr_err = self.visit(node.expr, context, index)
-        util.update_err_type(errors, node.type2, expr_type)
+        var_type = context.get_variable_info(node.id).type
+        util.update_err_type(errors, var_type, expr_type)
         util.update_errs(errors, expr_err)
         return None, errors if len(errors) else None
 
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
+        var_type = context.get_variable_info(node.id).type
         collec_type, collec_err = self.visit(node.collec, context, index)
-        util.update_err_type(errors, node.type, collec_type)
+        util.update_err_type(errors, var_type, collec_type)
         util.update_errs(errors, collec_err)
 
         init_type, init_err = self.visit(node.init, context, index)
-        util.update_err_type(errors, "int", init_type)
+        util.update_err_type(errors, Int(), init_type)
         util.update_errs(errors, init_err)
 
         len_type, len_err = self.visit(node.len, context, index)
-        util.update_err_type(errors, "int", len_type)
+        util.update_err_type(errors, Int(), len_type)
         util.update_errs(errors, len_err)
         return None, errors if len(errors) else None
 
@@ -88,7 +92,7 @@ class TypeCheckerVisitor(object):
     def visit(self, node: LoopNode, context: OtherContext, index: int = 0):
         errors = []
         expr_type, expr_err = self.visit(node.expr, context, index)
-        util.update_err_type(errors, "boolean", expr_type)
+        util.update_err_type(errors, Bool(), expr_type)
         util.update_errs(errors, expr_err)
 
         new_context = context.get_context(index)
@@ -101,7 +105,7 @@ class TypeCheckerVisitor(object):
     def visit(self, node: IterNode, context: OtherContext, index: int = 0):
         errors = []
         expr_type, expr_err = self.visit(node.expr, context, index)
-        util.update_err_type(errors, "vector", expr_type)
+        util.update_err_type(errors, Vector(), expr_type)
         util.update_errs(errors, expr_err)
         return None, errors if len(errors) else None
 
@@ -109,11 +113,11 @@ class TypeCheckerVisitor(object):
     def visit(self, node: BorrowNode, context: OtherContext, index: int = 0):
         errors = []
         init_type, init_err = self.visit(node.init, context, index)
-        util.update_err_type(errors, "int", init_type)
+        util.update_err_type(errors, Int(), init_type)
         util.update_errs(errors, init_err)
 
         len_type, len_err = self.visit(node.len, context, index)
-        util.update_err_type(errors, "int", len_type)
+        util.update_err_type(errors, Int(), len_type)
         util.update_errs(errors, len_err)
         return None, errors if len(errors) else None
 
@@ -121,8 +125,8 @@ class TypeCheckerVisitor(object):
     def visit(self, node: ConditionNode, context: OtherContext, index: int = 0):
         errors = []
         expr_type, expr_err = self.visit(
-            node.expr, context, index) if node.expr else ("boolean", None)
-        util.update_err_type(errors, "boolean", expr_type)
+            node.expr, context, index) if node.expr else (Bool(), None)
+        util.update_err_type(errors, Bool(), expr_type)
         util.update_errs(errors, expr_err)
 
         new_context = context.get_context(index)
@@ -134,34 +138,36 @@ class TypeCheckerVisitor(object):
     @when(ConstantNode)
     def visit(self, node: ConstantNode, context: OtherContext, index: int = 0):
         return node.type, None
-    
+
     @when(SpecialNode)
     def visit(self, node: SpecialNode, context: OtherContext, index: int = 0):
         return None, None
 
     @when(VariableNode)
     def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
-        type_var = context.get_variable_info(node.lex).type
-        return type_var, None
+        var_type = context.get_variable_info(node.lex).type
+        return var_type, None
 
     @when(AssignNode)
     def visit(self, node: AssignNode, context: OtherContext, index: int = 0):
         errors = []
-        type_var = context.get_variable_info(node.id).type
         expr_type, expr_err = self.visit(node.expr, context, index)
-        util.update_err_type(errors, type_var, expr_type)
+        var_type = context.get_variable_info(node.id).type
+        util.update_err_type(errors, var_type, expr_type)
         util.update_errs(errors, expr_err)
         return None, errors if len(errors) else None
 
     @when(SetIndexNode)
     def visit(self, node: SetIndexNode, context: OtherContext, index: int = 0):
         errors = []
-        type_var = context.get_variable_info(node.id).type
-        util.update_err_type(errors, "array", type_var)
+        var_type = context.get_variable_info(node.id).type
         expr_type, expr_err = self.visit(node.expr, context, index)
-        if not len(errors):
-            type_index = type_var.type
-            util.update_err_type(errors, type_index, expr_type)
+        if type(var_type) == Array:
+            util.update_err_type(errors, var_type.sub_type, expr_type)
+        else:
+            err = TypeError(
+                f"error de tipo, no se puede indexar en un {var_type}")
+            errors.append(err)
         util.update_errs(errors, expr_err)
         return None, errors if len(errors) else None
 
@@ -173,12 +179,32 @@ class TypeCheckerVisitor(object):
             args.append(get_type)
 
         errors = []
-        return_type = "error"
-        funcs_info = context.get_all_func_info(node.lex, len(args))
-        exist, info = util.exist_func(args, funcs_info)
-        if not exist:
-            err_args = "".join([f"{arg}, " for arg in args[:-1]] + [args[-1]])
-            errors.append(f"el método {node.lex}({err_args}) no existe")
+        err_args = "".join([f"{arg}, " for arg in args[:-1]] + [str(args[-1])]) if len(args) else ""
+        return_type = TypeError(f"el método {node.lex}({err_args}) no existe")
+
+        info = context.get_function_info(node.lex, args)
+        if not info:
+            errors.append(return_type)
+        else:
+            return_type = info.return_type
+        return return_type, errors if len(errors) else None
+
+    @when(DynamicCallNode)
+    def visit(self, node: DynamicCallNode, context: OtherContext, index: int = 0):
+        args = []
+        for get_arg in node.args:
+            get_type, _ = self.visit(get_arg, context, index)
+            args.append(get_type)
+
+        errors = []
+        err_args = "".join([f"{arg}, " for arg in args[:-1]] + [str(args[-1])]) if len(args) else ""
+        return_type = TypeError(f"el método {node.lex}({err_args}) no existe")
+
+        var_type, var_err = self.visit(node.head, context, index)
+        util.update_errs(errors, var_err)
+        info = var_type.get_function_info(node.lex, node.args)
+        if not info:
+            errors.append(return_type)
         else:
             return_type = info.return_type
         return return_type, errors if len(errors) else None
@@ -191,18 +217,19 @@ class TypeCheckerVisitor(object):
             args.append(get_type)
 
         errors = []
-        funcs_info = context.get_all_func_info(node.lex, len(args))
-        exist, _ = util.exist_func(args, funcs_info)
-        if not exist:
-            err_args = "".join([f"{arg}, " for arg in args[:-1]] + [args[-1]])
-            errors.append(f"el método {node.lex}({err_args}) no existe")
+        err_args = "".join([f"{arg}, " for arg in args[:-1]] + [str(args[-1])]) if len(args) else ""
+        return_type = TypeError(f"el método {node.lex}({err_args}) no existe")
+
+        info = context.get_function_info(node.lex, args)
+        if not info:
+            errors.append(return_type)
 
         poss_type, poss_err = self.visit(node.poss, context, index)
-        util.update_err_type(errors, "vector", poss_type)
+        util.update_err_type(errors, Vector(), poss_type)
         util.update_errs(errors, poss_err)
 
         rot_type, rot_err = self.visit(node.rot, context, index)
-        util.update_err_type(errors, "vector", rot_type)
+        util.update_err_type(errors, Vector(), rot_type)
         util.update_errs(errors, rot_err)
         return None, errors if len(errors) else None
 
@@ -215,16 +242,15 @@ class TypeCheckerVisitor(object):
             child_type, child_err = self.visit(child, context, index)
             expr_type = util.update_err_type(errors, expr_type, child_type)
             util.update_errs(errors, child_err)
-        
-        return_type = "error" if expr_type == "error" else "array"
+
+        return_type = expr_type if type(
+            expr_type) == TypeError else Array(expr_type)
         return return_type, errors if len(errors) else None
 
     @when(NotNode)
     def visit(self, node: NotNode, context: OtherContext, index: int):
         expr_type, errors = self.visit(node.expr, context, index)
-        util.update_err_type(errors, "boolean", expr_type)
-        if expr_type != "boolean":
-            expr_type = "error"
+        expr_type = util.update_err_type(errors, Bool(), expr_type)
         return expr_type, errors if len(errors) else None
 
     @when(PlusNode)
@@ -234,19 +260,19 @@ class TypeCheckerVisitor(object):
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        if left_type == "error" or right_type == "error":
-            return_type = "error"
+        if type(left_type) == TypeError or type(right_type) == TypeError:
+            return_type = TypeError()
         elif left_type != right_type:
-            return_type = "vector"
+            return_type = Vector()
         else:
-            return_type = "int"
+            return_type = Int()
 
-        if return_type != "error" and ((
-                left_type != "vector" and left_type != "int") or (
-                right_type != "vector" and right_type != "int")):
-            return_type = "error"
-            errors.append(
+        if type(return_type) != TypeError and ((
+                type(left_type) != Vector and type(left_type) != Int) or (
+                type(right_type) != Vector and type(right_type) != Int)):
+            return_type = TypeError(
                 f"operación inválida, esta tratando de sumar un {left_type} por {right_type}")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
@@ -257,171 +283,178 @@ class TypeCheckerVisitor(object):
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        if left_type == "error" or right_type == "error":
-            return_type = "error"
+        if type(left_type) == TypeError or type(right_type) == TypeError:
+            return_type = TypeError()
         elif left_type != right_type:
-            return_type = "vector"
+            return_type = Vector()
         else:
-            return_type = "int"
+            return_type = Int()
 
-        if return_type != "error" and ((
-                left_type != "vector" and left_type != "int") or (
-                right_type != "vector" and right_type != "int")):
-            return_type = "error"
-            errors.append(
+        if type(return_type) != TypeError and ((
+                type(left_type) != Vector and type(left_type) != Int) or (
+                type(right_type) != Vector and type(right_type) != Int)):
+            return_type = TypeError(
                 f"operación inválida, esta tratando de restar un {left_type} por {right_type}")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(StarNode)
+    @ when(StarNode)
     def visit(self, node: StarNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        return_type = "int" if left_type != "error" and right_type != "error" else "error"
-        if return_type != "error" and ((
-                left_type != "vector" and left_type != "int") or (
-                right_type != "vector" and right_type != "int") or (
-                left_type == right_type and left_type == "vector")):
-            return_type = "error"
-            errors.append(
+        return_type = Int() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
+        if type(return_type) != TypeError and ((
+                type(left_type) != Vector and type(left_type) != Int) or (
+                type(right_type) != Vector and type(right_type) != Int) or (
+                type(left_type) == type(right_type) and type(left_type) == Vector)):
+            return_type = TypeError(
                 f"operación inválida, esta tratando de multiplicar un {left_type} por {right_type}")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(DivNode)
+    @ when(DivNode)
     def visit(self, node: DivNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        return_type = "int" if left_type != "error" and right_type != "error" else "error"
-        if return_type != "error" and ((
-                left_type != "vector" and left_type != "int") or (
-                right_type != "vector" and right_type != "int") or (
-                left_type == right_type and left_type == "vector")):
-            return_type = "error"
-            errors.append(
+        return_type = Int() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
+        if type(return_type) != TypeError and ((
+                type(left_type) != Vector and type(left_type) != Int) or (
+                type(right_type) != Vector and type(right_type) != Int) or (
+                type(left_type) == type(right_type) and type(left_type) == Vector)):
+            return_type = TypeError(
                 f"operación inválida, esta tratando de dividir un {left_type} por {right_type}")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(ModNode)
+    @ when(ModNode)
     def visit(self, node: ModNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        return_type = "int" if left_type != "error" and right_type != "error" else "error"
-        if return_type != "error" and ((
-                left_type != "vector" and left_type != "int") or (
-                right_type != "vector" and right_type != "int") or (
-                left_type == right_type and left_type == "vector")):
-            return_type = "error"
-            errors.append(
+        return_type = Int() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
+        if type(return_type) != TypeError and ((
+                type(left_type) != Vector and type(left_type) != Int) or (
+                type(right_type) != Vector and type(right_type) != Int) or (
+                type(left_type) == type(right_type) and type(left_type) == Vector)):
+            return_type = TypeError(
                 f"operación inválida, esta tratando de hayar el resto de un {left_type} por {right_type}")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(VectNode)
+    @ when(VectNode)
     def visit(self, node: VectNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
 
-        left_type = util.update_err_type(errors, "int", left_type)
+        left_type = util.update_err_type(errors, Int(), left_type)
         util.update_errs(errors, left_err)
-        right_type = util.update_err_type(errors, "int", right_type)
+        right_type = util.update_err_type(errors, Int(), right_type)
         util.update_errs(errors, right_err)
 
-        return_type = "vector" if left_type != "error" and right_type != "error" else "error"
+        return_type = Vector() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
         return return_type, errors if len(errors) else None
 
-    @when(BinaryLogicNode)
+    @ when(BinaryLogicNode)
     def visit(self, node: BinaryLogicNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        return_type = "boolean" if left_type != "error" and right_type != "error" else "error"
-        if return_type != "error" and (left_type != "boolean" or right_type != "boolean"):
-            return_type = "error"
-            errors.append(
+        return_type = Bool() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
+        if type(return_type) != TypeError and (type(left_type) != Bool or type(right_type) != Bool):
+            return_type = TypeError(
                 f"operación inválida, se esperaban ambos bool pero dieron {left_type} y {right_type}")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(EqNode)
+    @ when(EqNode)
     def visit(self, node: EqNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        return_type = "boolean" if left_type != "error" and right_type != "error" else "error"
-        if return_type != "error" and (left_type != right_type):
-            return_type = "error"
-            errors.append(
+        return_type = Bool() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
+        if type(return_type) != TypeError and (type(left_type) != type(right_type)):
+            return_type = TypeError(
                 f"operación inválida, se esperaba una comparación con elementos del mismo tipo")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(NonEqNode)
+    @ when(NonEqNode)
     def visit(self, node: NonEqNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
         util.update_errs(errors, left_err)
 
-        return_type = "boolean" if left_type != "error" and right_type != "error" else "error"
-        if return_type != "error" and (left_type != "int" or right_type != "int"):
-            return_type = "error"
-            errors.append(
+        return_type = Bool() if type(left_type) != TypeError and type(
+            right_type) != TypeError else TypeError()
+        if type(return_type) != TypeError and (type(left_type) != Int or type(right_type) != Int):
+            return_type = TypeError(
                 f"operación inválida, solo se puede comparar entre numeros, excepto en el equals")
+            errors.append(return_type)
         util.update_errs(errors, right_err)
         return return_type, errors if len(errors) else None
 
-    @when(GetIndexNode)
+    @ when(GetIndexNode)
     def visit(self, node: GetIndexNode, context: OtherContext, index: int):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
         right_type, right_err = self.visit(node.right, context, index)
 
-        return_type = "error"
-        if left_type == "group":
-            return_type = "node"
-        elif left_type == "array":
-            return_type == "int"
-        elif left_type != "error":
-            errors.append(f"no se puede indexar en este tipo")
+        return_type = TypeError(f"no se puede indexar en este tipo")
+        if type(left_type) == Group:
+            return_type = NodeType()
+        elif type(left_type) == Array:
+            return_type == Int
+        elif type(left_type) != TypeError:
+            errors.append(return_type)
         util.update_errs(errors, left_err)
-        right_type = util.update_err_type(errors, "int", right_type)
+        right_type = util.update_err_type(errors, Int(), right_type)
         util.update_errs(errors, right_err)
 
-        return_type = return_type if right_type != "error" else "error"
+        return_type = return_type if type(right_type) != TypeError else TypeError()
         return return_type, errors if len(errors) else None
 
-    @when(SliceNode)
+    @ when(SliceNode)
     def visit(self, node: SliceNode, context: OtherContext, index: int):
         pass
 
-    @when(LinkNode)
+    @ when(LinkNode)
     def visit(self, node: LinkNode, context: OtherContext, index: int = 0):
         errors = []
         left_type, left_err = self.visit(node.left, context, index)
-        util.update_err_type(errors, "node", left_type)
+        util.update_err_type(errors, NodeType(), left_type)
         util.update_errs(errors, left_err)
 
         expr_type, expr_err = self.visit(node.expr, context, index)
-        util.update_err_type(errors, "vector", expr_type)
+        util.update_err_type(errors, Vector(), expr_type)
         util.update_errs(errors, expr_err)
 
         right_type, right_err = self.visit(node.right, context, index)
-        util.update_err_type(errors, "node", right_type)
+        util.update_err_type(errors, NodeType(), right_type)
         util.update_errs(errors, right_err)
         return None, errors if len(errors) else None

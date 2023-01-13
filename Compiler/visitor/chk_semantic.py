@@ -1,3 +1,4 @@
+from Compiler.semantic.types import Type, Array
 import Compiler.utils as util
 from Compiler.semantic.language import *
 from .visitor import *
@@ -28,10 +29,24 @@ class SemanticCheckerVisitor(object):
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, context: ProgramContext, index: int = 0):
         errors = []
+        num_err = self.visit(node.num, context.begin_context, index)
+        util.update_errs(errors, num_err)
         for i, child in enumerate(node.step):
             child_err = self.visit(child, context.begin_context, i)
             util.update_errs(errors, child_err)
         return errors
+
+    @when(FuncDeclarationNode)
+    def visit(self, node: FuncDeclarationNode, context: DefineContext, index: int = 0):
+        errors = []
+        new_context = context.get_context(index)
+        for i, child in enumerate(node.params):
+            child_err = self.visit(child, new_context, i)
+            util.update_errs(errors, child_err)
+        for i, child in enumerate(node.body):
+            child_err = self.visit(child, new_context, i)
+            util.update_errs(errors, child_err)
+        return errors if len(errors) else None
 
     @when(StepNode)
     def visit(self, node: StepNode, context: BeginContext, index: int = 0):
@@ -42,22 +57,15 @@ class SemanticCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return errors
 
-    @when(FuncDeclarationNode)
-    def visit(self, node: FuncDeclarationNode, context: DefineContext, index: int = 0):
-        errors = []
-        new_context = context.get_context(index)
-        for i, child in enumerate(node.body):
-            child_err = self.visit(child, new_context, i)
-            util.update_errs(errors, child_err)
-        return errors if len(errors) else None
-
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
+        type_var, type_err = util.get_type(node.type)
+        util.update_errs(errors, type_err)
         if context.is_var_defined(node.id):
             errors.append(f"variable {node.id} está ya definida")
         else:
-            context.define_variable(node.id, node.type)
+            context.define_variable(node.id, type_var)
         expr_err = self.visit(node.expr, context, index)
         util.update_errs(errors, expr_err)
         return errors if len(errors) else None
@@ -65,21 +73,37 @@ class SemanticCheckerVisitor(object):
     @when(ArrayDeclarationNode)
     def visit(self, node: ArrayDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
+        type_var, type_err = util.get_type(node.type)
+        util.update_errs(errors, type_err)
         if context.is_var_defined(node.id):
             errors.append(f"variable {node.id} está ya definida")
         else:
-            context.define_variable(node.id, node.type2)
+            context.define_variable(node.id, Array(type_var))
         expr_err = self.visit(node.expr, context, index)
         util.update_errs(errors, expr_err)
         return errors if len(errors) else None
 
+    @when(ParamNode)
+    def visit(self, node: ParamNode, context: OtherContext, index: int = 0):
+        type_var, errors = util.get_type(node.type)
+        context.define_variable(node.idx, type_var)
+        return errors
+
+    @when(ParamArrayNode)
+    def visit(self, node: ParamArrayNode, context: OtherContext, index: int = 0):
+        type_var, errors = util.get_type(node.type)
+        context.define_variable(node.idx, Array(type_var))
+        return errors
+
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
+        type_var, type_err = util.get_type(node.type)
+        util.update_errs(errors, type_err)
         if context.is_var_defined(node.id):
             errors.append(f"{node.id} está ya definida")
         else:
-            context.define_variable(node.id, node.type)
+            context.define_variable(node.id, type_var)
         collec_err = self.visit(node.collec, context, index)
         util.update_errs(errors, collec_err)
 
@@ -145,24 +169,10 @@ class SemanticCheckerVisitor(object):
             util.update_errs(errors, child_err)
         return errors if len(errors) else None
 
-    @when(ConstantNode)
-    def visit(self, node: ConstantNode, context: OtherContext, index: int = 0):
-        return None
-
-    @when(VariableNode)
-    def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
-        if not context.is_var_defined(node.lex):
-            return [f"variable {node.lex} no esta definida"]
-        return None
-
-    @when(SpecialNode)
-    def visit(self, node: SpecialNode, context: OtherContext, index: int = 0):
-        return None
-
     @when(AssignNode)
     def visit(self, node: AssignNode, context: OtherContext, index: int = 0):
         errors = []
-        if not context.is_var_defined(node.lex):
+        if not context.is_var_defined(node.id):
             errors.append(f"variable {node.lex} no esta definida")
 
         expr_err = self.visit(node.expr, context, index)
@@ -182,6 +192,20 @@ class SemanticCheckerVisitor(object):
         util.update_errs(errors, expr_err)
         return errors
 
+    @when(ConstantNode)
+    def visit(self, node: ConstantNode, context: OtherContext, index: int = 0):
+        return None
+
+    @when(VariableNode)
+    def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
+        if not context.is_var_defined(node.lex):
+            return [f"variable {node.lex} no esta definida"]
+        return None
+
+    @when(SpecialNode)
+    def visit(self, node: SpecialNode, context: OtherContext, index: int = 0):
+        return None
+
     @when(CallNode)
     def visit(self, node: CallNode, context: OtherContext, index: int = 0):
         errors = []
@@ -192,6 +216,10 @@ class SemanticCheckerVisitor(object):
             arg_err = self.visit(arg, context, index)
             util.update_errs(errors, arg_err)
         return errors if len(errors) else None
+    
+    @when(DynamicCallNode)
+    def visit(self, node: DynamicCallNode, context: OtherContext, index: int = 0):
+        return None
 
     @when(BeginCallNode)
     def visit(self, node: BeginCallNode, context: OtherContext, index: int = 0):
