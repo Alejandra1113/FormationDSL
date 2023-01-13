@@ -19,7 +19,6 @@ def replace(dict,code):
 
 
 init_code = """
-from unittest import result
 from IA.formations import Formation
 from entities.utils import DIRECTIONS, direction_to_int, direction_to_tuple, int_to_direction,dir_tuple
 from enum import Enum
@@ -99,22 +98,6 @@ class PosRunner:
             child.last_visit = self.last_run
             self.inner_set_and_check_positions(child)
 
-def dos_filas(group,direction):
-    old_dir = group[0].direction
-    group[0].direction = direction
-    temp = len(group)//2
-    resto = len(group)%2
-    i = 0
-    while(i < temp + resto):
-        if(i < temp):
-            group[temp + i].add_child(group[i],(1,0))
-            group[i].add_child(group[temp + i],(-1,0))
-        
-        if(i > 0):
-            group[temp + i - 1].add_child(group[temp + i],(0,1))
-            group[temp + i].add_child(group[temp + i - 1],(0,-1))
-        i += 1
-    group[0].direction = old_dir
 
 def borrow(src_list,dst_list,length,starting_at):
     for i in range(starting_at,starting_at + length):
@@ -182,10 +165,46 @@ call_code = '<id>(<params>)'
 
 change_line_code = '\n'
 
+
 line_up_code = """<id>(<args>,dir_tuple[<rot>])
 <tab>runner.set_and_check_positions(<origin>,<pos>)
 """
 array_code = '[<content>]'
+
+NotNode_code = 'not <expr>'
+
+PlusNode_code = '<left> <op> <right>'
+
+PlusNode_vector_code = 'sum_vec(<a>, <b>)'
+
+MinusNode_code = '<left> <op> <right>'
+
+MinusNode_vector_code = 'sum_vec(<a>, scalar_product(<b>, -1))'
+
+StarNode_code = '<left> <op> <right>'
+
+StarNode_vector_code = 'scalar_product(<a>, <b>)'
+
+DivNode_code = '<left> // <right>'
+
+ModNode_code = '<left> % <right>'
+
+AndNode_code = '<left> and <right>'
+
+OrNode_code = '<left> or <right>'
+
+EqNode_code = '<left> == <right>'
+
+NonEqNode_code = '<left> != <right>'
+
+EqlNode_code = '<left> <= <right>'
+
+EqgNode_code = '<left> >= <right>'
+
+GtNode_code = '<left> > <right>'
+
+LtNode_code = '<left> < <right>'
+
 
 
 class CodeGenVisitor(object):
@@ -194,7 +213,12 @@ class CodeGenVisitor(object):
                 ,while_code, borrow_code, if_code,var_code,vec_code
                 ,true_code, false_code, const_arr_code, set_index_code
                 ,return_code, break_code, continue_code,call_code,change_line_code
-                ,line_up_code, array_code):
+                ,line_up_code, array_code ,NotNode_code, PlusNode_code, MinusNode_code
+                , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code
+                , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
+                , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code
+                ):
+        
         self.init_code = init_code
         #keyword (<count>: cantidad de individuos)
         self.start_step_code = start_step_code
@@ -250,7 +274,24 @@ class CodeGenVisitor(object):
         self.line_up_code = line_up_code
         #keyword (<content>: las expresiones con las que se inicializa el array)
         self.array_code = array_code
-
+        self.NotNode_code = NotNode_code
+        self.PlusNode_code = PlusNode_code
+        self.MinusNode_code = MinusNode_code
+        self.StarNode_vector_code = StarNode_vector_code
+        self.PlusNode_vector_code = PlusNode_vector_code
+        self.MinusNode_vector_code = MinusNode_vector_code
+        self.StarNode_code = StarNode_code
+        self.DivNode_code = DivNode_code
+        self.ModNode_code = ModNode_code
+        self.AndNode_code = AndNode_code
+        self.OrNode_code = OrNode_code
+        self.EqNode_code = EqNode_code
+        self.NonEqNode_code = NonEqNode_code
+        self.EqlNode_code = EqlNode_code
+        self.EqgNode_code = EqgNode_code
+        self.GtNode_code = GtNode_code
+        self.LtNode_code = LtNode_code
+        
     def build_body_arr(self,body,current_depth):
         result_body = []
         for line in body:
@@ -258,7 +299,7 @@ class CodeGenVisitor(object):
             result_body.append(self.visit(line,current_depth))
             result_body.append(self.change_line_code)
         return result_body
-
+    
     @on('node')
     def visit(self, node,depth):
         pass
@@ -267,8 +308,8 @@ class CodeGenVisitor(object):
     def visit(self, node: ProgramNode, depth: int = 0):
         arr = []
         arr.append(self.init_code)
-        arr.append(self.visit(node.definition, depth))
-        arr.append(self.visit(node.begin_wit, depth))
+        arr.append(self.visit(self, node.definition, depth))
+        arr.append(self.visit(self, node.begin_wit, depth))
         return ''.join(arr)
         
 
@@ -325,6 +366,7 @@ class CodeGenVisitor(object):
                        ,self.assign_code )
 
 
+
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, depth: int = 0):
         # collec de donde
@@ -333,10 +375,10 @@ class CodeGenVisitor(object):
         # id a donde
         
         return replace({'<tab>' : '\t'*depth
-                       ,'<id>'  : self.visit(node.id,depth)
-                       ,'<src>' : self.visit(node.collec,depth)
-                       ,'<init>': self.visit(node.init,depth)
-                       ,'<len>' : self.visit(node.len,depth)
+                       ,'<id>'  : self.visit(self, node.id,depth)
+                       ,'<src>' : self.visit(self, node.collec,depth)
+                       ,'<init>': self.visit(self, node.init,depth)
+                       ,'<len>' : self.visit(self, node.len,depth)
                        ,'<type>': node.type }
                        , self.take_code)
     @when(LoopNode)
@@ -369,9 +411,9 @@ class CodeGenVisitor(object):
         
     @when(SetIndexNode)
     def visit(self,node: SetIndexNode,depth: int = 0):
-        return replace({'<id>': self.visit(node.id,depth)
-                       ,'<index>': self.visit(node.expr,depth)
-                       ,'<expr>': self.visit(node.expr,depth)
+        return replace({'<id>': self.visit(self, node.id,depth)
+                       ,'<index>': self.visit(self, node.expr,depth)
+                       ,'<expr>': self.visit(self, node.expr,depth)
                        ,'<tab>': '\t'*depth}
                        ,self.set_index_code)
 
@@ -423,82 +465,99 @@ class CodeGenVisitor(object):
                        ,self.line_up_code)
 
     @when(ArrayNode)
-    def visit(self,node:ArrayNode,depth)
+    def visit(self,node:ArrayNode,depth):
         return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.lex])})
 
 
     @when(NotNode)
-    def visit(node :NotNode, depth :int = 0):
-        pass
-
-
+    def visit(self, node :NotNode, depth :int = 0):
+        return replace({'<expr>': self.visit(node.expr, depth)}, self.NotNode_code)
+    
     @when(PlusNode)
-    def visit(node :PlusNode, depth :int = 0):
-        pass
+    def visit(self, node :PlusNode, depth :int = 0):
+        if node.left.type is Int:
+            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
+        elif node.left.type is Vector:
+            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
+            
 
 
     @when(MinusNode)
-    def visit(node :MinusNode, depth :int = 0):
-        pass
+    def visit(self, node :MinusNode, depth :int = 0):
+        if node.left.type is Int:
+            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
+        elif node.left.type is Vector:
+            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
+         
 
 
     @when(StarNode)
-    def visit(node :StarNode, depth :int = 0):
-        pass
+    def visit(self, node :StarNode, depth :int = 0):
+        if node.left.type is Int and node.right.type is Int:
+            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
+        elif node.left.type is Vector or node.right.type is Vector:
+            if node.right.type is Vector:
+                node.left , node.right = node.right, node.left
+            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
+         
 
 
     @when(DivNode)
-    def visit(node :DivNode, depth :int = 0):
-        pass
+    def visit(self, node :DivNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.DivNode_code)
+        
 
 
     @when(ModNode)
-    def visit(node :ModNode, depth :int = 0):
-        pass
-
-    @when(BinaryLogicNode)
-    def visit(node :BinaryLogicNode, depth :int = 0):
-        pass
-
+    def visit(self, node :ModNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.ModNode_code)
+        
 
     @when(AndNode)
-    def visit(node :AndNode, depth :int = 0):
-        pass
+    def visit(self, node :AndNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.AndNode_code)
 
 
     @when(OrNode)
-    def visit(node :OrNode, depth :int = 0):
-        pass
+    def visit(self, node :OrNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.OrNode_code)
+
 
 
     @when(EqNode)
-    def visit(node :EqNode, depth :int = 0):
-        pass
+    def visit(self, node :EqNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.EqNode_code)
+
 
 
     @when(NonEqNode)
-    def visit(node :NonEqNode, depth :int = 0):
-        pass
+    def visit(self, node :NonEqNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.NonEqNode_code)
+        
 
 
     @when(EqlNode)
-    def visit(node :EqlNode, depth :int = 0):
-        pass
+    def visit(self, node :EqlNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.EqlNode_code)
+        
 
 
     @when(EqgNode)
-    def visit(node :EqgNode, depth :int = 0):
-        pass
+    def visit(self, node :EqgNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.EqgNode_code)
+
 
 
     @when(GtNode)
-    def visit(node :GtNode, depth :int = 0):
-        pass
+    def visit(self, node :GtNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.GtNode_code)
+
 
 
     @when(LtNode)
-    def visit(node :LtNode, depth :int = 0):
-        pass
+    def visit(self, node :LtNode, depth :int = 0):
+        replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.LtNode_code)
+       
 
 
 class VectNode(BinaryNode):
