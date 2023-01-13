@@ -3,7 +3,7 @@ from semantic.language import *
 
 Gram = Grammar()
 comma, plus, minus, star, div, opar, cpar, lt, gt, lte = Gram.Terminals(', + - * / ( ) < > <=')
-gte, eq, andop, orop, notop, dot, ocbra, ccbra, two_points = Gram.Terminals('>= == & %= ! . { } :')
+gte, eq, andop, orop, notop, dot, ocbra, ccbra, two_points = Gram.Terminals('>= == & % = ! . { } :')
 rem, wloop, deff, condif, condelse, iter_aof, groups, obra, cbra = Gram.Terminals('% while def if else all_of groups [ ]')
 at, of, from_op, borrow, st_at, to, lineup, step, heading = Gram.Terminals('at of from borrow st_at to lineup step heading')
 args, take, with_op, definition, begin_with, end, assign, in_op = Gram.Terminals('args take with definition begin_with end = in')

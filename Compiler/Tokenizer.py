@@ -34,8 +34,8 @@ class Token:
 variable_tokens = {  
    'num'              :  (num,              r'(?:\d+)'),                                                                                   # Numbers      
    'bool_value'       :  (bool_value,       r'(?:true(\W|\Z))|(?:false(\W|\Z))'),                                                          # Bool Values          
-  'type_id'          :  (type_id,          r'(?:int(\W|\Z))|(?:bool(\W|\Z))|(?:group(\W|\Z))|(?:array(\W|\Z))|(?:vector(\W|\Z))'),        # Type Identifiers                
-  'rpos'             :  (rpos,             r'(?:next(\W|\Z))|(?:prev(\W|\Z))'),                                                           # Relative Position          
+   'type_id'          :  (type_id,          r'(?:int(\W|\Z))|(?:bool(\W|\Z))|(?:group(\W|\Z))|(?:array(\W|\Z))|(?:vector(\W|\Z))'),        # Type Identifiers                
+   'rpos'             :  (rpos,             r'(?:next(\W|\Z))|(?:prev(\W|\Z))'),                                                           # Relative Position          
    'direc'            :  (direc,            r'(?:up_right(\W|\Z))|(?:down_right(\W|\Z))|(?:down_left(\W|\Z))|(?:up_left(\W|\Z))|(?:up(\W|\Z))|(?:right(\W|\Z))|(?:down(\W|\Z))|(?:left(\W|\Z))'),  # Directions       
    'two_no_word'      :  ("Two No word",    r'(//)|(<=)|(>=)|(==)'),                                                                       # Non word
    'one_no_word'      :  ("One No word",    r'[^A-Za-z0-9_\n\t ]{1}'),                                                                     # Non word
@@ -91,9 +91,9 @@ fixed_tokens['definition']          = definition
 fixed_tokens['begin_with']          = begin_with                  
 fixed_tokens['end']                 = end                  
 fixed_tokens['in']                  = in_op   
-fixed_tokens['return'] = return_term 
-fixed_tokens['continue'] = continue_term 
-fixed_tokens['break'] = break_term            
+fixed_tokens['return']              = return_term 
+fixed_tokens['continue']            = continue_term 
+fixed_tokens['break']               = break_term            
 
 
 
