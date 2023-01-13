@@ -466,7 +466,7 @@ class CodeGenVisitor(object):
 
     @when(ArrayNode)
     def visit(self,node:ArrayNode,depth):
-        return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.lex])})
+        return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.elements])})
 
 
     @when(NotNode)
