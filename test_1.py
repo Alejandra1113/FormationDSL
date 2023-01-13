@@ -11,7 +11,7 @@ definition
 
 def prueba(int a){
     int i = 0
-    int array b = [1, 2, 3, 4]
+    int[] b = [1, 2, 3, 4]
     while(i < b.len()){
         b[i] = b[i] + 1
         i = i + 1
@@ -51,27 +51,27 @@ end
 
 """, fixed_tokens, variable_tokens)
 
-# with open(".\\actions", "rb") as file:
-#     action = pickle.load(file)
-# with open(".\\goto", "rb") as file:
-#     goto = pickle.load(file)
-# parser = LR1Parser(Gram, action, goto, True)
-# # parser = LR1Parser(Gram, True)
+with open(".\\actions", "rb") as file:
+    action = pickle.load(file)
+with open(".\\goto", "rb") as file:
+    goto = pickle.load(file)
+parser = LR1Parser(Gram, action, goto, True)
+# parser = LR1Parser(Gram, True)
 
-# # with open(".\\actions", "wb") as file:
-# #     pickle.dump(parser.action, file)
-# # with open(".\\goto", "wb") as file:
-# #     pickle.dump(parser.goto, file)
+# with open(".\\actions", "wb") as file:
+#     pickle.dump(parser.action, file)
+# with open(".\\goto", "wb") as file:
+#     pickle.dump(parser.goto, file)
 
-# deriv, ast = parser(tokens)
+deriv, ast = parser(tokens)
 
-# _scope = ScopeCheckerVisitor()
-# _semantic = SemanticCheckerVisitor()
-# _type = TypeCheckerVisitor()
+_scope = ScopeCheckerVisitor()
+_semantic = SemanticCheckerVisitor()
+_type = TypeCheckerVisitor()
 
-# context = ProgramContext()
-# scope_err = _scope.visit(ast, context, 0)
-# semantic_err = _semantic.visit(ast, context, 0)
-# type_err = _type.visit(ast, context, 0)
-# print("OK")
+context = ProgramContext()
+scope_err = _scope.visit(ast, context, 0)
+semantic_err = _semantic.visit(ast, context, 0)
+type_err = _type.visit(ast, context, 0)
+print("OK")
 

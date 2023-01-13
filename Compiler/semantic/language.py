@@ -51,14 +51,24 @@ class VarDeclarationNode(DeclarationNode):
 
 
 class ArrayDeclarationNode(DeclarationNode):
-    def __init__(self, type1, type2, id, expr):
-        self.type1 = type1
-        self.type2 = type2
+    def __init__(self, type, id, expr):
+        self.type = type
         self.id = id
         self.expr = expr
 
 
+class TypeNode(DeclarationNode):
+    def __init__(self, name) -> None:
+        self.name = name
+
+
 class ParamNode(DeclarationNode):
+    def __init__(self, idx, type):
+        self.idx = idx
+        self.type = type
+
+
+class ParamArrayNode(DeclarationNode):
     def __init__(self, idx, type):
         self.idx = idx
         self.type = type
@@ -158,12 +168,14 @@ class InstantiateNode(AtomicNode):
 class SpecialNode(AtomicNode):
     pass
 
+
 class DynamicCallNode(AtomicNode):
     def __init__(self, idx, head, args):
         AtomicNode.__init__(self, idx)
         self.head = head
         self.args = args
-        
+
+
 class CallNode(AtomicNode):
     def __init__(self, idx, args):
         AtomicNode.__init__(self, idx)
