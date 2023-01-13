@@ -1,3 +1,4 @@
+from Compiler.semantic.types import Type, Array
 from pycompiler import Production, Sentence, Symbol, EOF, Epsilon
 
 class ContainerSet:
@@ -166,11 +167,16 @@ def tokenizer(G, fixed_tokens):
     return decorate
 
 def update_err_type(errors, set_type, get_type):
-    if set_type != get_type and get_type != "error":
-        errors.append(f"error de tipo, esta tratando de guardar un {get_type} en {set_type}")
-        return "error"
-    if get_type == "error":
-        return "error"
+    if type(get_type) != TypeError and type(set_type) != type(get_type):
+        err = TypeError(f"error de tipo, se recibio un {get_type} y se esperaba un {set_type}")
+        errors.append(err)
+        return err
+    if type(get_type) == TypeError:
+        return TypeError(f"error de tipo, se recibio un {get_type} y se esperaba un {set_type}")
+    if type(set_type) == Array and type(set_type.sub_type) != type(get_type.sub_type):
+        err = TypeError(f"error de tipo, se recibio un array de {get_type.sub_type} y se esperaba un {set_type.sub_type}")
+        errors.append(err)
+        return err
     return get_type
 
 def update_errs(errors, new_errs):
@@ -189,3 +195,10 @@ def exist_func(args, funcs):
         if check_types(args, info.params):
             return True, info
     return False, None
+
+def get_type(get_type):
+    types_class = filter(lambda x : x.__name__ != "Array", Type.__subclasses__())
+    for type_class in types_class:
+        if get_type == type_class.name:
+            return type_class(), None
+    return get_type, [f"tipo {get_type} no definido"]

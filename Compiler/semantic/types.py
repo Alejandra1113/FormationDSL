@@ -18,15 +18,14 @@ class FunctionInfo:
 
 
 class Type:
-    def __init__(self, name) -> None:
-        self.name = name
+    def __init__(self) -> None:
         self.methods = []
-    
+
     def is_func_defined(self, fname, params):
         if type(params) is int:
             return len(self.get_all_function_info(fname, params))
         return self.get_function_info(fname, params) is not None
-    
+
     def get_all_function_info(self, fname, n):
         funcs = []
         for info in self.methods:
@@ -40,12 +39,15 @@ class Type:
             if info.name != fname or len(info.params) != len(params):
                 continue
             all_check = True
-            for arg_1, arg_2 in zip(info.params, params):
-                if arg_1.type != arg_2.type:
+            for param_type, arg_type in zip(info.params, params):
+                if type(param_type) != type(arg_type):
                     all_check = False
             if all_check:
                 return info
         return None
+
+    def __init_subclass__(cls) -> None:
+        cls.name = cls.__name__.lower()
 
     def __eq__(self, __o: object) -> bool:
         return type(__o) == type(self) and self.name == __o.name
@@ -64,14 +66,14 @@ class Bool(Type):
 
 
 array_func_dict = [
-    FunctionInfo("len", [lg.ParamNode("list", "group")], "int"),
-    FunctionInfo("len", [lg.ParamNode("list", "array")], "int")
+    FunctionInfo("len", [], Int())
 ]
 
+
 class Array(Type):
-    def __init__(self, name, sub_type) -> None:
+    def __init__(self, sub_type) -> None:
         self.sub_type = sub_type
-        Type.__init__(self, name)
+        Type.__init__(self)
         self.methods = array_func_dict
 
     def __eq__(self, __o: object) -> bool:
@@ -79,4 +81,13 @@ class Array(Type):
 
 
 class Group(Type):
+    def __init__(self) -> None:
+        Type.__init__(self)
+        self.methods = array_func_dict
+
+    def __eq__(self, __o: object) -> bool:
+        return Type.__eq__(self, __o)
+
+
+class NodeType(Type):
     pass

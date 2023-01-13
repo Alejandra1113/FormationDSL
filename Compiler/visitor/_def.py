@@ -21,8 +21,8 @@ class ProgramContext:
     def is_func_defined(self, fname, params):
         return self.define_context.is_func_defined(fname, params)
 
-    def get_func_info(self, fname, params):
-        return self.define_context.get_func_info(fname, params)
+    def get_function_info(self, fname, params):
+        return self.define_context.get_function_info(fname, params)
 
     def get_all_func_info(self, fname, params):
         return self.define_context.get_all_func_info(fname, params)
@@ -57,7 +57,7 @@ class DefineContext(Context):
     def is_func_defined(self, fname, params):
         return self.is_local_func(fname, params)
 
-    def get_func_info(self, fname, params):
+    def get_function_info(self, fname, params):
         return self.get_local_function_info(fname, params)
 
     def get_all_func_info(self, fname, params):
@@ -81,8 +81,8 @@ class DefineContext(Context):
             if info.name != fname or len(info.params) != len(params):
                 continue
             all_check = True
-            for arg_1, arg_2 in zip(info.params, params):
-                if arg_1.type != arg_2.type:
+            for param_type, arg_type in zip(info.params, params):
+                if type(param_type) != type(arg_type):
                     all_check = False
             if all_check:
                 return info
@@ -98,8 +98,8 @@ class OtherContext(Context):
     def is_func_defined(self, fname, params):
         return self.parent.is_func_defined(fname, params)
 
-    def get_func_info(self, fname, params):
-        return self.parent.get_func_info(fname, params)
+    def get_function_info(self, fname, params):
+        return self.parent.get_function_info(fname, params)
 
     def get_all_func_info(self, fname, params):
         return self.parent.get_all_func_info(fname, params)
@@ -111,9 +111,9 @@ class OtherContext(Context):
 
     def get_variable_info(self, vname):
         variable = self.get_local_variable_info(vname)
-        if variable:
-            return variable
-        return self.parent.get_variable_info(vname)
+        if type(self.parent) != DefineContext and not variable:
+            return self.parent.get_variable_info(vname)
+        return variable
 
     def is_var_defined(self, vname):
         find = self.is_local_var(vname)
@@ -145,8 +145,8 @@ class BeginContext(Context):
     def is_func_defined(self, fname, params):
         return self.parent.is_func_defined(fname, params)
 
-    def get_func_info(self, fname, params):
-        return self.parent.get_func_info(fname, params)
+    def get_function_info(self, fname, params):
+        return self.parent.get_function_info(fname, params)
 
     def get_all_func_info(self, fname, params):
         return self.parent.get_all_func_info(fname, params)
@@ -163,8 +163,8 @@ class StepContext(Context):
     def is_func_defined(self, fname, params):
         return self.parent.is_func_defined(fname, params)
 
-    def get_func_info(self, fname, params):
-        return self.parent.get_func_info(fname, params)
+    def get_function_info(self, fname, params):
+        return self.parent.get_function_info(fname, params)
 
     def get_all_func_info(self, fname, params):
         return self.parent.get_all_func_info(fname, params)

@@ -72,6 +72,5 @@ _type = TypeCheckerVisitor()
 context = ProgramContext()
 scope_err = _scope.visit(ast, context, 0)
 semantic_err = _semantic.visit(ast, context, 0)
-type_err = _type.visit(ast, context, 0)
+_, type_err = _type.visit(ast, context, 0)
 print("OK")
-
