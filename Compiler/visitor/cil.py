@@ -167,7 +167,7 @@ class CilVisitor(object):
                 expr
             )
 
-            lines.append(LoopNode(GtNode(name, ConstantNode(0, 'int', return_type=Int()), return_type=Bool()), [link, AssignNode(temp, MinusNode(
+            lines.append(LoopNode(GtNode(VariableNode( temp, Int()), ConstantNode(0, 'int', return_type=Int()), return_type=Bool()), [link, AssignNode(temp, MinusNode(
                 VariableNode(temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int()))]))
         else:
             lines.append(VarDeclarationNode(

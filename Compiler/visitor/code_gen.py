@@ -419,17 +419,17 @@ class CodeGenVisitor(object):
 
     @when(ConstantNode)#numeros, direc, bool, array
     def visit(self,node : ConstantNode,depth: int = 0):
-        if(node.type.name ==  'num'):
+        if(type(node.return_type) == Int):
             return str(node.lex)
-        elif(node.type.name == 'vec'):
-            return replace({'<a>': node.lex[0]
-                           ,'<b>': node.lex[1]}
+        elif(type(node.return_type) == Vector):
+            return replace({'<a>': str(node.lex[0])
+                           ,'<b>': str(node.lex[1])}
                            ,self.vec_code) 
-        elif(node.type.name == 'bool'):
+        elif(type(node.return_type) == Bool):
             if(node.lex):
                 return self.true_code
             return self.false_code
-        elif(node.type.name == 'array'):
+        elif(type(node.return_type) == Array):
             return replace({'<body>': ','.join([str(num) for num in node.lex])}
                            , self.const_arr_code)
 
@@ -475,18 +475,18 @@ class CodeGenVisitor(object):
     
     @when(PlusNode)
     def visit(self, node :PlusNode, depth :int = 0):
-        if node.left.type is Int:
+        if type(node.left.return_type) == Int:
             return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
-        elif node.left.type is Vector:
+        elif type(node.left.return_type) == Vector:
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
             
 
 
     @when(MinusNode)
     def visit(self, node :MinusNode, depth :int = 0):
-        if node.left.type is Int:
+        if type(node.left.return_type) == Int:
             return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
-        elif node.left.type is Vector:
+        elif type(node.left.return_type) == Vector:
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
          
 
@@ -560,16 +560,29 @@ class CodeGenVisitor(object):
        
 
 
-class VectNode(BinaryNode):
-    pass
+    @when(VectNode)
+    def visit(self, node :VectNode, depth :int = 0):
+        return replace({'<a>': node.lex[0]
+                        ,'<b>': node.lex[1]}
+                        ,self.vec_code)
 
-class GetIndexNode(BinaryNode):
-    pass
-
-
-class SliceNode(BinaryNode):
-    pass
-
+    @when(GetIndexNode)
+    def visit(self,node: GetIndexNode, depth:int = 0):
+        return replace({'<id>': self.visit(node.left,depth)
+                       ,'<index>': self.visit(node.right,depth)}
+                       ,self.get_index_code)
+    @when(SliceNode)
+    def visit(self,node: SliceNode, depth: int = 0):
+        return replace({'<a>': str(node.left)
+                       ,'<b>': str(node.right)}
+                       ,self.slice_code)
+    @when(LinkNode)
+    def visit(self,node: LinkNode, depth: int = 0):
+        return replace({'<left>': self.visit(node.left,depth)
+                       ,'<right>':self.visit(node.right,depth)
+                       ,'<expr>': self.visit(node.expr,depth)
+                       ,'<tab>': '\t'*depth}
+                       ,self.link_code)
 
 class LinkNode(TernaryNode):
     pass
