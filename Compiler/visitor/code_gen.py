@@ -136,7 +136,7 @@ assign_code = '<id> = <value>'
 
 take_code = '<id> = []\n<tab>borrow(<src>,<id>,<init>,<len>)'
 
-declaration_code = '<id> = None'
+declaration_code = '<id> = <expr>'
 
 while_code = 'while(<cond>):\n<body>'
 
@@ -160,8 +160,7 @@ get_index_code = '<id>[<index>]'
 
 slice_code = '[index for index in range(<a>,<b> + 1)]'
 
-link_code = """<left>.add_child(<right>,<expr>)
-<tab><right>.add_child(<left>,scalar_product(<expr>,-1))"""
+link_code = "of_rel(<left>,<right>,<expr>)"
 
 return_code = 'return'
 
@@ -172,6 +171,8 @@ continue_code = 'continue'
 call_code = '<id>(<params>)'
 
 change_line_code = '\n'
+
+len_code = 'len(<id>)'
 
 array_declaration_code = '<id> = <array>'
 
@@ -225,7 +226,7 @@ python_tamplate = (init_code,start_step_code,func_def_code
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ,get_index_code,slice_code,link_code)
+                ,get_index_code,slice_code,link_code,len_code)
 
 class CodeGenVisitor(object):
     def __init__(self,init_code,start_step_code,func_def_code
@@ -237,7 +238,7 @@ class CodeGenVisitor(object):
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ,get_index_code,slice_code,link_code):
+                ,get_index_code,slice_code,link_code,len_code):
         
         self.init_code = init_code
         #keyword (<count>: cantidad de individuos)
@@ -280,6 +281,7 @@ class CodeGenVisitor(object):
         #        (<index>: expresion que da el indice )
         #        (<body> : expresion a asignar)
         self.set_index_code = set_index_code
+        self.len_code = len_code
         self.return_code = return_code
         self.break_code = break_code
         self.continue_code = continue_code
@@ -387,7 +389,8 @@ class CodeGenVisitor(object):
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode , depth: int = 0):
         return replace({'<id>' : node.id
-                       ,'<type>':node.type}
+                       ,'<type>':node.type
+                       ,'<expr>':self.visit(node.expr,depth)}
                        ,self.declaration_code)
 
     @when(AssignNode)
@@ -407,7 +410,7 @@ class CodeGenVisitor(object):
         
         return replace({'<tab>' : '\t'*depth
                        ,'<id>'  : node.id
-                       ,'<src>' : node.collec
+                       ,'<src>' : self.visit(node.collec,depth)
                        ,'<init>': self.visit(node.init,depth)
                        ,'<len>' : self.visit(node.len,depth)
                        ,'<type>': node.type }
@@ -485,10 +488,10 @@ class CodeGenVisitor(object):
 
     @when(BeginCallNode)
     def visit(self,node:BeginCallNode,depth):
-        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index,'num')) for index in node.args[0].lex]),depth)
+        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index,'int',Int())) for index in node.args[0].lex]),depth)
         args = [self.visit(item,depth) for item in node.args[1:]]
         args.insert(0,first_arg)
-        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0],'num')),depth)
+        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0].lex[0],'int',Int())),depth)
         return replace({'<id>': node.lex
                        ,'<args>': ','.join(args)
                        ,'<rot>': self.visit(node.rot,depth)
@@ -499,7 +502,9 @@ class CodeGenVisitor(object):
 
     @when(DynamicCallNode)
     def visit(self,node : DynamicCallNode,depth):
-        return replace({'<head>':node.head
+        if(node.lex == 'len'):
+            return replace({'<id>':self.visit(node.head,depth)},self.len_code)
+        return replace({'<head>':self.visit(node.head,depth)
                        ,'<id>':node.lex
                        ,'<args>':','.join([self.visit(arg) for arg in node.args])}
                        ,self.dynamic_call_code)
