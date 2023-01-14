@@ -58,7 +58,7 @@ class CilVisitor(object):
     
     @when(BeginCallNode)
     def visit(self, node): 
-        return BeginCallNode(self.fun_names(node.lex), node.args, node.poss, node.rot)  
+        return BeginCallNode(self.set_function(node.lex),  node.poss, node.rot, node.args)  
     
     @when(DefinitionsNode)
     def visit(self, node):
@@ -171,7 +171,7 @@ class CilVisitor(object):
 
         for a in node.args:
             arg.append(self.visit(a))
-        return CallNode(self.fun_names(node.lex), arg, node.return_type)
+        return CallNode(self.set_function(node.lex), arg, node.return_type)
 
     @when(IterNode)
     def visit(self, node):

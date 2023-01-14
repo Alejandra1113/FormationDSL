@@ -185,7 +185,6 @@ class CallNode(AtomicNode):
 class BeginCallNode(AtomicNode):
     def __init__(self, idx, poss, rot, args):
         AtomicNode.__init__(self, idx)
-        args[0]
         self.args = args
         self.poss = poss
         self.rot = rot
