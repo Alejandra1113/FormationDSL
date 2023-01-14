@@ -260,9 +260,10 @@ step
 end
 ```
 
-
+Esta nueva cadena de código se tokeniza con el método `tokenize`, los `fixed_tokens` y  `variable_tokens` presentes en `Tokenizer.py`
 # Parser
 
+Para parsear la 
 # AST
 
 # Checkeo Semántico y de Tipos
