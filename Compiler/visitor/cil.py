@@ -179,7 +179,7 @@ class CilVisitor(object):
                     temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()))),
                 expr
             )
-            lines.append(LoopNode(LtNode(name, MinusNode(CallNode("len", [name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int()), return_type=Bool()), [
+            lines.append(LoopNode(LtNode(VariableNode( temp, Int()), MinusNode(CallNode("len", [name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int()), return_type=Bool()), [
                          link, AssignNode(temp, PlusNode(VariableNode(temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int())))]))
 
         return lines
