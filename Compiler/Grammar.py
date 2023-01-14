@@ -1,6 +1,6 @@
-from semantic.types import *
+from Compiler.semantic.types import *
 from pycompiler import Grammar, Terminal, NonTerminal, EOF, Epsilon
-from semantic.language import *
+from Compiler.semantic.language import *
 
 Gram = Grammar()
 comma, plus, minus, star, div, opar, cpar, lt, gt, lte = Gram.Terminals(', + - * / ( ) < > <=')

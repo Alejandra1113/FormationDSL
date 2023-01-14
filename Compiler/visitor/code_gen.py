@@ -156,6 +156,13 @@ const_arr_code = '[<body>]'
 
 set_index_code = '<id>[<index>] = <expr>'
 
+get_index_code = '<id>[<index>]'
+
+slice_code = '[index for index in range(<a>,<b> + 1)]'
+
+link_code = """<left>.add_child(<right>,<expr>)
+<tab><right>.add_child(<left>,scalar_product(<expr>,-1))"""
+
 return_code = 'return'
 
 break_code = 'break'
@@ -167,6 +174,8 @@ call_code = '<id>(<params>)'
 change_line_code = '\n'
 
 array_declaration_code = '<id> = <array>'
+
+dynamic_call_code = '<head>.<id>(<args>)'
 
 line_up_code = """<id>(<args>,dir_tuple[<rot>])
 <tab>runner.set_and_check_positions(<origin>,<pos>)
@@ -213,9 +222,10 @@ python_tamplate = (init_code,start_step_code,func_def_code
                 ,true_code, false_code, const_arr_code, set_index_code
                 ,return_code, break_code, continue_code,call_code,change_line_code
                 ,line_up_code, array_code ,NotNode_code, PlusNode_code, MinusNode_code
-                , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code
+                , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
-                , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code)
+                , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
+                ,get_index_code,slice_code,link_code)
 
 class CodeGenVisitor(object):
     def __init__(self,init_code,start_step_code,func_def_code
@@ -224,10 +234,10 @@ class CodeGenVisitor(object):
                 ,true_code, false_code, const_arr_code, set_index_code
                 ,return_code, break_code, continue_code,call_code,change_line_code
                 ,line_up_code, array_code ,NotNode_code, PlusNode_code, MinusNode_code
-                , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code
+                , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ):
+                ,get_index_code,slice_code,link_code):
         
         self.init_code = init_code
         #keyword (<count>: cantidad de individuos)
@@ -263,6 +273,7 @@ class CodeGenVisitor(object):
         self.vec_code = vec_code
         self.true_code = true_code
         self.false_code = false_code
+        self.slice_code = slice_code
         #keyword (<body>: coma separated numbers)
         self.const_arr_code = const_arr_code
         #keyword (<id>: nombre del array a indexar)
@@ -275,6 +286,10 @@ class CodeGenVisitor(object):
         #keyword (<id>: nombre de la funcion a llamar)
         #        (<params>: los argumentos separados por coma)
         self.call_code = call_code
+        #keyword (<head>: objecto sobre el que se hace el llamado)
+        #        (<id>: funcion que se llama)
+        #        (<args>: argumentos)
+        self.dynamic_call_code = dynamic_call_code
         self.change_line_code = change_line_code
         #keyword (<id>: nombre de la fomracion)
         #        (<args>: argumentos de la formacion)
@@ -282,10 +297,13 @@ class CodeGenVisitor(object):
         #        (<origin>: el nodo que es centro de la formacion)
         #        (<pos>: la posición donde se va a poner el centro)
         self.line_up_code = line_up_code
+        self.get_index_code = get_index_code
         #keyword (<content>: las expresiones con las que se inicializa el array)
         self.array_code = array_code
         #keyword (<id>: nombre de la variable, <array>: el array, <type>: el tipo del array)
         self.array_declaration_code = array_declaration_code
+        self.link_code = link_code
+
         self.NotNode_code = NotNode_code
         self.PlusNode_code = PlusNode_code
         self.MinusNode_code = MinusNode_code
@@ -354,7 +372,7 @@ class CodeGenVisitor(object):
         # node.body
         body = self.build_body_arr(node.body,depth + 1)
         return replace({'<tab>': '\t'*(depth + 1)
-                       ,'<id>': node.idx 
+                       ,'<id>': node.id
                        ,'<params>': ','.join([self.visit(prm,depth) for prm in node.params])
                        ,'<body>': ''.join(body)}
                        ,self.func_def_code)
@@ -387,8 +405,8 @@ class CodeGenVisitor(object):
         # id a donde
         
         return replace({'<tab>' : '\t'*depth
-                       ,'<id>'  : self.visit(node.id,depth)
-                       ,'<src>' : self.visit(node.collec,depth)
+                       ,'<id>'  : node.id
+                       ,'<src>' : node.collec
                        ,'<init>': self.visit(node.init,depth)
                        ,'<len>' : self.visit(node.len,depth)
                        ,'<type>': node.type }
@@ -477,6 +495,14 @@ class CodeGenVisitor(object):
                        ,'<pos>': self.visit(node.poss,depth)}
                        ,self.line_up_code)
 
+    @when(DynamicCallNode)
+    def visit(self,node : DynamicCallNode,depth):
+        return replace({'<head>':node.head
+                       ,'<id>':node.lex
+                       ,'<args>':','.join([self.visit(arg) for arg in node.args])}
+                       ,self.dynamic_call_code)
+    
+
     @when(ArrayNode)
     def visit(self,node:ArrayNode,depth):
         return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.elements])},self.array_code)
@@ -488,26 +514,26 @@ class CodeGenVisitor(object):
     
     @when(PlusNode)
     def visit(self, node :PlusNode, depth :int = 0):
-        if node.left.type is Int:
+        if node.left.return_type is Int:
             return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
-        elif node.left.type is Vector:
+        elif node.left.return_type is Vector:
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
             
 
     @when(MinusNode)
     def visit(self, node :MinusNode, depth :int = 0):
-        if node.left.type is Int:
+        if node.left.return_type is Int:
             return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
-        elif node.left.type is Vector:
+        elif node.left.return_type is Vector:
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
          
 
     @when(StarNode)
     def visit(self, node :StarNode, depth :int = 0):
-        if node.left.type is Int and node.right.type is Int:
+        if node.left.return_type is Int and node.right.return_type is Int:
             return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
-        elif node.left.type is Vector or node.right.type is Vector:
-            if node.right.type is Vector:
+        elif node.left.return_type is Vector or node.right.return_type is Vector:
+            if node.right.return_type is Vector:
                 node.left , node.right = node.right, node.left
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
     
@@ -569,16 +595,27 @@ class CodeGenVisitor(object):
        
 
 
-class VectNode(BinaryNode):
-    pass
+    @when(VectNode)
+    def visit(self, node :VectNode, depth :int = 0):
+        return replace({'<a>': node.lex[0]
+                        ,'<b>': node.lex[1]}
+                        ,self.vec_code)
 
-class GetIndexNode(BinaryNode):
-    pass
+    @when(GetIndexNode)
+    def visit(self,node: GetIndexNode, depth:int = 0):
+        return replace({'<id>': node.left
+                       ,'<index>': self.visit(node.right,depth)}
+                       ,self.get_index_code)
+    @when(SliceNode)
+    def visit(self,node: SliceNode, depth: int = 0):
+        return replace({'<a>': str(node.left)
+                       ,'<b>': str(node.right)}
+                       ,self.slice_code)
+    @when(LinkNode)
+    def visit(self,node: LinkNode, depth: int = 0):
+        return replace({'<left>': self.visit(node.left,depth)
+                       ,'<right>':self.visit(node.right,depth)
+                       ,'<expr>': self.visit(node.expr,depth)
+                       ,'<tab>': '\t'*depth}
+                       ,self.link_code)
 
-
-class SliceNode(BinaryNode):
-    pass
-
-
-class LinkNode(TernaryNode):
-    pass
