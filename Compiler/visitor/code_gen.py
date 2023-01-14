@@ -178,6 +178,13 @@ array_declaration_code = '<id> = <array>'
 
 dynamic_call_code = '<head>.<id>(<args>)'
 
+begin_code = """steps = []
+<tab>for _ in range(<count>):
+<tab>   step.append([])"""
+
+end_step_code = """for i in range(len(G)):
+<tab>   step[i].append(G[i].position)"""
+
 line_up_code = """<id>(<args>,dir_tuple[<rot>])
 <tab>runner.set_and_check_positions(<origin>,<pos>)
 """
@@ -226,7 +233,7 @@ python_tamplate = (init_code,start_step_code,func_def_code
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ,get_index_code,slice_code,link_code,len_code)
+                ,get_index_code,slice_code,link_code,len_code,begin_code,end_step_code)
 
 class CodeGenVisitor(object):
     def __init__(self,init_code,start_step_code,func_def_code
@@ -238,7 +245,7 @@ class CodeGenVisitor(object):
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ,get_index_code,slice_code,link_code,len_code):
+                ,get_index_code,slice_code,link_code,len_code,begin_code,end_step_code):
         
         self.init_code = init_code
         #keyword (<count>: cantidad de individuos)
@@ -293,6 +300,7 @@ class CodeGenVisitor(object):
         #        (<args>: argumentos)
         self.dynamic_call_code = dynamic_call_code
         self.change_line_code = change_line_code
+        self.end_step_code = end_step_code
         #keyword (<id>: nombre de la fomracion)
         #        (<args>: argumentos de la formacion)
         #        (<rot>: rotacion) 
@@ -305,7 +313,7 @@ class CodeGenVisitor(object):
         #keyword (<id>: nombre de la variable, <array>: el array, <type>: el tipo del array)
         self.array_declaration_code = array_declaration_code
         self.link_code = link_code
-
+        self.begin_code = begin_code
         self.NotNode_code = NotNode_code
         self.PlusNode_code = PlusNode_code
         self.MinusNode_code = MinusNode_code
@@ -354,7 +362,10 @@ class CodeGenVisitor(object):
 
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, depth: int = 0):
-        return ''.join([self.visit(child,depth,node.num) for child in node.step])
+        begin = replace({'<tab>':'\t'*depth
+                        ,'<count>':str(node.num)}
+                        ,self.begin_code)
+        return begin + ''.join([self.visit(child,depth,node.num) for child in node.step])
 
     @when(StepNode)
     def visit(self, node: StepNode, depth: int = 0,count: int = 0):
@@ -365,6 +376,8 @@ class CodeGenVisitor(object):
         for call in node.instructions:
             result.append('\t'*depth)
             result.append(self.visit(call,depth))
+        result.append(replace({'<tab>':'\t'*depth}
+                              ,self.end_step_code))
         return self.change_line_code.join(result) + self.change_line_code
 
     @when(FuncDeclarationNode)
