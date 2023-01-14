@@ -20,3 +20,68 @@ def norma_inf(a, b):
     for i in range(len(a)):
         dist = max(abs(a[i] - b[i]), dist)
     return dist
+
+def direction_to_int(direction):
+    if direction == DIRECTIONS.N:
+        return 0
+    elif direction == DIRECTIONS.NE:
+        return 1
+    elif direction == DIRECTIONS.E:
+        return 2
+    elif direction == DIRECTIONS.SE:
+        return 3
+    elif direction == DIRECTIONS.S:
+        return 4
+    elif direction == DIRECTIONS.SW:
+        return 5
+    elif direction == DIRECTIONS.W:
+        return 6
+    elif direction == DIRECTIONS.NW:
+        return 7
+
+def direction_to_tuple(direction):
+    if direction == DIRECTIONS.N:
+        return (-1,0)
+    elif direction == DIRECTIONS.NE:
+        return (-1,1)
+    elif direction == DIRECTIONS.E:
+        return (0,1)
+    elif direction == DIRECTIONS.SE:
+        return (1,1)
+    elif direction == DIRECTIONS.S:
+        return (1,0)
+    elif direction == DIRECTIONS.SW:
+        return (1,-1)
+    elif direction == DIRECTIONS.W:
+        return (0,-1)
+    elif direction == DIRECTIONS.NW:
+        return (-1,-1)
+
+dir_tuple = {
+    (-1, 0): DIRECTIONS.N,
+    (-1, 1): DIRECTIONS.NE,
+    (0, 1): DIRECTIONS.E,
+    (1, 1): DIRECTIONS.SE,
+    (1, 0): DIRECTIONS.S,
+    (1, -1): DIRECTIONS.SW,
+    (0, -1): DIRECTIONS.W,
+    (-1, -1): DIRECTIONS.NW
+}
+
+def int_to_direction(direction):
+    if direction == 0:
+        return DIRECTIONS.N
+    elif direction == 1:
+        return DIRECTIONS.NE
+    elif direction == 2:
+        return DIRECTIONS.E
+    elif direction == 3:
+        return DIRECTIONS.SE
+    elif direction == 4:
+        return DIRECTIONS.S
+    elif direction == 5:
+        return DIRECTIONS.SW
+    elif direction == 6:
+        return DIRECTIONS.W
+    elif direction == 7:
+        return DIRECTIONS.NW

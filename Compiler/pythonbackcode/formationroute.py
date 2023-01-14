@@ -1,6 +1,6 @@
 import numpy as np
-from whcastar import *
-from UI import *
+from .whcastar import *
+from .UI import *
 import pygame as pg 
 
 step = [ [(-1,0),(2,3),(-2,1)], [(0,-3),(3,5),(5,2) ], [(2,5),(3,4),(0,0)]]
@@ -37,7 +37,7 @@ def get_formation_route(step_positions : list(list((int,int)))):
         paths = whcastar_search(ids, origin, destiny, rrastar_list, heigth, width, 16, None)
         if all([p[-1][0] == destiny[i] for i, p in paths.items()]) :
             current_step += 1
-            if current_step >= len(step_positions[0]):               
+            if current_step < len(step_positions[0]):               
                 rrastar_list = np.ndarray(shape=len(step_positions), dtype=RRAstar)
                 origin = destiny
                 destiny = [i for i in step_positions[current_step]]

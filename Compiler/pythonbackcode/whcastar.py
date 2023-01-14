@@ -1,6 +1,6 @@
 import math
 from math import inf
-from utils import *
+from .utils import *
 from queue import PriorityQueue
 from itertools import chain
 

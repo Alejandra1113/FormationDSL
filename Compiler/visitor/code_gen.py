@@ -20,9 +20,11 @@ def replace(dict,code):
 
 
 init_code = """
-from IA.formations import Formation
-from entities.utils import DIRECTIONS, direction_to_int, direction_to_tuple, int_to_direction,dir_tuple
+from Compiler.pythonbackcode.utils import DIRECTIONS, direction_to_int, direction_to_tuple, int_to_direction,dir_tuple
+from Compiler.pythonbackcode.formationroute import get_formation_route
+from Compiler.pythonbackcode.UI import *
 from enum import Enum
+import pygame as pg 
 
 rpos = Enum('rpos', 'next prev')
 
@@ -180,10 +182,10 @@ dynamic_call_code = '<head>.<id>(<args>)'
 
 begin_code = """steps = []
 <tab>for _ in range(<count>):
-<tab>   step.append([])"""
+<tab>   steps.append([])"""
 
 end_step_code = """for i in range(len(G)):
-<tab>   step[i].append(G[i].position)"""
+<tab>   steps[i].append(G[i].position)"""
 
 line_up_code = """<id>(<args>,dir_tuple[<rot>])
 <tab>runner.set_and_check_positions(<origin>,<pos>)
@@ -224,6 +226,16 @@ GtNode_code = '<left> > <right>'
 
 LtNode_code = '<left> < <right>'
 
+final_fantasy = """
+pg.init()
+
+table, path = get_formation_route(steps)
+table = examples.paint.get_example_grid(table)
+condition = lambda x: x < len(path[0]) - 1
+render = Render(lambda:condition, table, path , width=1400, height=800)
+render.start()
+"""
+
 python_tamplate = (init_code,start_step_code,func_def_code
                 ,param_code,assign_code ,take_code,declaration_code
                 ,while_code, borrow_code, if_code,var_code,vec_code
@@ -233,7 +245,7 @@ python_tamplate = (init_code,start_step_code,func_def_code
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ,get_index_code,slice_code,link_code,len_code,begin_code,end_step_code)
+                ,get_index_code,slice_code,link_code,len_code,begin_code,end_step_code,final_fantasy)
 
 class CodeGenVisitor(object):
     def __init__(self,init_code,start_step_code,func_def_code
@@ -245,7 +257,7 @@ class CodeGenVisitor(object):
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code,dynamic_call_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
                 , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
-                ,get_index_code,slice_code,link_code,len_code,begin_code,end_step_code):
+                ,get_index_code,slice_code,link_code,len_code,begin_code,end_step_code,final_fantasy):
         
         self.init_code = init_code
         #keyword (<count>: cantidad de individuos)
@@ -331,6 +343,7 @@ class CodeGenVisitor(object):
         self.EqgNode_code = EqgNode_code
         self.GtNode_code = GtNode_code
         self.LtNode_code = LtNode_code
+        self.final_fantasy = final_fantasy
 
         
     def build_body_arr(self,body,current_depth):
@@ -353,6 +366,7 @@ class CodeGenVisitor(object):
         arr.append(self.init_code)
         arr.append(self.visit(node.definitions, depth))
         arr.append(self.visit(node.begin_with, depth))
+        arr.append(self.final_fantasy)
         return ''.join(arr)
         
 
@@ -503,10 +517,12 @@ class CodeGenVisitor(object):
 
     @when(BeginCallNode)
     def visit(self,node:BeginCallNode,depth):
-        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index - 1,'int',Int())) for index in node.args[0].lex]),depth)
+        arg = node.args[0]
+        members = arg.lex if type(arg) is ConstantNode else list(range(arg.left.lex, arg.right.lex + 1))
+        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index - 1,'int',Int())) for index in members]),depth)
         args = [self.visit(item,depth) for item in node.args[1:]]
         args.insert(0,first_arg)
-        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0].lex[0] - 1,'int',Int())),depth)
+        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(members[0] - 1,'int',Int())),depth)
         return replace({'<id>': node.lex
                        ,'<args>': ','.join(args)
                        ,'<rot>': self.visit(node.rot,depth)
