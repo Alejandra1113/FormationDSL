@@ -135,8 +135,8 @@ class CilVisitor(object):
         arg = []
         for a in node.args:
             arg.append(self.visit(a))
-        h = self.visit(node.head)           
-        return DynamicCallNode(node.lex,h, arg, node.type)
+        h = self.visit(node.head)
+        return DynamicCallNode(node.lex, h, arg, node.return_type)
     
     @when(CallNode)
     def visit(self, node):
@@ -158,11 +158,11 @@ class CilVisitor(object):
         lines = []
         if node.dir == "prev":
             lines.append(VarDeclarationNode(temp, 'int', MinusNode(CallNode("len", [
-                         VariableNode(name, Group())], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int())))
+                         name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int())))
             link = LinkNode(
-                GetIndexNode(VariableNode(name, NodeType()), VariableNode(
+                GetIndexNode(name, VariableNode(
                     temp, return_type=Int())),
-                GetIndexNode(VariableNode(name, NodeType()), MinusNode(VariableNode(
+                GetIndexNode(name, MinusNode(VariableNode(
                     temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()))),
                 expr
             )
@@ -173,9 +173,9 @@ class CilVisitor(object):
             lines.append(VarDeclarationNode(
                 temp, 'int', ConstantNode(0, 'int', return_type=Int())))
             link = LinkNode(
-                GetIndexNode(VariableNode(name, NodeType()), VariableNode(
+                GetIndexNode(name, VariableNode(
                     temp, return_type=Int())),
-                GetIndexNode(VariableNode(name, NodeType()), PlusNode(VariableNode(
+                GetIndexNode(name, PlusNode(VariableNode(
                     temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()))),
                 expr
             )
