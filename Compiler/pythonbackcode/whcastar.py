@@ -21,9 +21,8 @@ class Problem(object):
 
 
 class ViewProblem(Problem):
-    def __init__(self, roadmap, *args, **kwargs):
-        self.roadmap = roadmap
-        self.dim_x, self.dim_y = roadmap.distance.shape
+    def __init__(self, dimx, dimy, *args, **kwargs):
+        self.dim_x, self.dim_y = dimx, dimy
         Problem.__init__(self, *args, **kwargs)
 
     def actions(self, state):
@@ -49,7 +48,7 @@ class FindVertex(ViewProblem):
         x, y = state
         dirs = [(dirvar.name, (I_DIR[dirvar.value - 1], J_DIR[dirvar.value - 1])) for dirvar in DIRECTIONS]
         return [(name, move) for name, move in dirs
-                                    if validMove(x + move[0], y + move[1], self.dim_x, self.dim_y) and self.roadmap.distance[x + move[0], y + move[1]] != 0]
+                                    if validMove(x + move[0], y + move[1], self.dim_x, self.dim_y)]
 
 class FindWithAgent(FindVertex):
     def __init__(self, reservation_table: dict, *args, **kwargs):
@@ -189,14 +188,14 @@ def whcastar_heuristic(rrastar_instance: RRAstar, node: NodeTree):
         return cost
     return inf
 
-def init_rrastar(start, target, roadmap):
-    rrastar_problem = FindVertex(roadmap=roadmap, goals=[start])
+def init_rrastar(start, target, heigth, width):
+    rrastar_problem = FindVertex(heigth, width, goals=[start])
     he = lambda n: norma2(start, n.state)
     rrastar_instance = RRAstar(start=NodeTree(state=target), rrastar_problem=rrastar_problem, he=he)
     return rrastar_instance
 
-def start_whcastar_search(reservation_table: dict, roadmap, rrastar_instance: RRAstar, start, target, w: int):
-    agent_problem = FindWithAgent(reservation_table=reservation_table, roadmap=roadmap, goals=[(target, w)])
+def start_whcastar_search(reservation_table: dict, heigth, width, rrastar_instance: RRAstar, start, target, w: int):
+    agent_problem = FindWithAgent(reservation_table=reservation_table, heigth= heigth, width = width, goals=[(target, w)])
     start_node = NodeTree(state=(start, 0))
     he = lambda n: whcastar_heuristic(rrastar_instance=rrastar_instance, node=n)
     filter = lambda n: agent_problem.is_goal(n.state) or n.state[1] == w
@@ -220,18 +219,18 @@ def add_edge(n, reservation_table: dict, rrastar_instance: RRAstar, w):
         current_node = NodeTree(state=state, parent=current_node, path_cost=current_node.path_cost + 1)
     return [current_node]
 
-def whcastar_search(connectors,starts:list[tuple] ,goals: list[tuple], rrastar_list: list[RRAstar], roadmap, w: int, reservation_table):
+def whcastar_search(connectors,starts:list[tuple] ,goals: list[tuple], rrastar_list: list[RRAstar], heigth, width, w: int, reservation_table):
     reservation_table = {} if not reservation_table else reservation_table
 
     for i in range(len(goals)):
         start, target = starts[i], goals[i]
-        rrastar_list[i] = init_rrastar(start=start, target=target, roadmap=roadmap) if rrastar_list[i] is None else rrastar_list[i]
+        rrastar_list[i] = init_rrastar(start=start, target=target,heigth= heigth,width= width) if rrastar_list[i] is None else rrastar_list[i]
         reservation_table[(start, 0)] = connectors[i]
     paths = {}
     for i in range(len(goals)):
         start, target = goals[i]
         rrastar_instance = rrastar_list[i]
-        path = start_whcastar_search(reservation_table=reservation_table, roadmap=roadmap, rrastar_instance=rrastar_instance, start=start, target=target, w=w)
+        path = start_whcastar_search(reservation_table=reservation_table, heigth= heigth,width= width, rrastar_instance=rrastar_instance, start=start, target=target, w=w)
         paths[connectors[i]] = path
         for cell in path:
             reservation_table[cell] = connectors[i]
