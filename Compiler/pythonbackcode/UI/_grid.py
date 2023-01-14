@@ -114,11 +114,11 @@ def get_sprint(newscale: tuple[int, int], Cell: Cell, source: Union[Color, Surfa
         raise NotImplementedError("Cell type indefinido")
 
     if not Cell.is_empty:
-        surface = surface.copy()
-        name_color = "Blue"
+        surface = SprintSurface(Color(0, 0, 255), newscale)
+        # name_color = "Blue"
         # draw = image.load(f".\\contents\\icons\\{type(Cell.unit.unit).__name__}.png").convert_alpha()
         # background_draw = image.load(f".\\contents\\BG\\{name_color}BG{type(Cell.unit.unit).__name__}.png").convert_alpha()
-        x, y = surface.get_size()
+        # x, y = surface.get_size()
         
         # life_background = SprintSurface(Color(150, 0, 0), (x, y*0.10))
         # life = SprintSurface(Color(0, 150, 0), (x * Cell.unit.get_health_points() / Cell.unit.unit.get_health_points, y*0.10))
