@@ -1,4 +1,4 @@
-import Compiler.semantic.language as lg
+import semantic.language as lg
 
 __all__ = ['VariableInfo', 'FunctionInfo', 'Type', 'Int',
            'Vector', 'Bool', 'Array', 'Group']

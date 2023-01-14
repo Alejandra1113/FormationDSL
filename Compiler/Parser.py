@@ -1,5 +1,5 @@
 from automata import build_LR1_automaton
-from pandas import DataFrame
+#from pandas import DataFrame
 from errors import ParsingError
 
 class ShiftReduceParser:

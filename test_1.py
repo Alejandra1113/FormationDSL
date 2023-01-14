@@ -1,7 +1,10 @@
 from Compiler import tokenize, code1, fixed_tokens, variable_tokens
 from Compiler import LR1Parser, Gram
 from Compiler.visitor import *
+from Compiler.visitor.code_gen import python_tamplate
 import pickle
+
+from Compiler.visitor.code_gen import CodeGenVisitor
 
 # print(code3)
 tokens = tokenize(
@@ -9,6 +12,14 @@ r"""
 
 definition
 
+def prueba_dos(int a){
+    int i = 0
+    int[] b = [1, 2, 3, 4]
+    while(i < b.len()){
+        b[i] = b[i] + 1
+        i = i + 1
+    }
+}
 def prueba(int a){
     int i = 0
     int[] b = [1, 2, 3, 4]
@@ -68,9 +79,12 @@ deriv, ast = parser(tokens)
 _scope = ScopeCheckerVisitor()
 _semantic = SemanticCheckerVisitor()
 _type = TypeCheckerVisitor()
+_gen = CodeGenVisitor(*python_tamplate)
 
 context = ProgramContext()
 scope_err = _scope.visit(ast, context, 0)
 semantic_err = _semantic.visit(ast, context, 0)
 _, type_err = _type.visit(ast, context, 0)
+code = _gen.visit(ast,0)
+print(code)
 print("OK")

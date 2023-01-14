@@ -1,11 +1,12 @@
 import itertools
+from Compiler.semantic.types import *
 import Compiler.utils as util
 from Compiler.semantic.language import *
 from .visitor import *
 from ._def import *
 import re
 
-__all__ = ['ScopeCheckerVisitor']
+__all__ = ['CodeGenVisitor']
 
 
 def replace(dict,code):
@@ -165,6 +166,7 @@ call_code = '<id>(<params>)'
 
 change_line_code = '\n'
 
+array_declaration_code = '<id> = <array>'
 
 line_up_code = """<id>(<args>,dir_tuple[<rot>])
 <tab>runner.set_and_check_positions(<origin>,<pos>)
@@ -205,7 +207,15 @@ GtNode_code = '<left> > <right>'
 
 LtNode_code = '<left> < <right>'
 
-
+python_tamplate = (init_code,start_step_code,func_def_code
+                ,param_code,assign_code ,take_code,declaration_code
+                ,while_code, borrow_code, if_code,var_code,vec_code
+                ,true_code, false_code, const_arr_code, set_index_code
+                ,return_code, break_code, continue_code,call_code,change_line_code
+                ,line_up_code, array_code ,NotNode_code, PlusNode_code, MinusNode_code
+                , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code
+                , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
+                , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code)
 
 class CodeGenVisitor(object):
     def __init__(self,init_code,start_step_code,func_def_code
@@ -216,7 +226,7 @@ class CodeGenVisitor(object):
                 ,line_up_code, array_code ,NotNode_code, PlusNode_code, MinusNode_code
                 , StarNode_code, DivNode_code, ModNode_code, AndNode_code, OrNode_code
                 , EqNode_code, NonEqNode_code, EqlNode_code, EqgNode_code, GtNode_code, LtNode_code
-                , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code
+                , PlusNode_vector_code, MinusNode_vector_code, StarNode_vector_code,array_declaration_code
                 ):
         
         self.init_code = init_code
@@ -274,6 +284,8 @@ class CodeGenVisitor(object):
         self.line_up_code = line_up_code
         #keyword (<content>: las expresiones con las que se inicializa el array)
         self.array_code = array_code
+        #keyword (<id>: nombre de la variable, <array>: el array, <type>: el tipo del array)
+        self.array_declaration_code = array_declaration_code
         self.NotNode_code = NotNode_code
         self.PlusNode_code = PlusNode_code
         self.MinusNode_code = MinusNode_code
@@ -291,6 +303,7 @@ class CodeGenVisitor(object):
         self.EqgNode_code = EqgNode_code
         self.GtNode_code = GtNode_code
         self.LtNode_code = LtNode_code
+
         
     def build_body_arr(self,body,current_depth):
         result_body = []
@@ -308,14 +321,13 @@ class CodeGenVisitor(object):
     def visit(self, node: ProgramNode, depth: int = 0):
         arr = []
         arr.append(self.init_code)
-        arr.append(self.visit(self, node.definition, depth))
-        arr.append(self.visit(self, node.begin_wit, depth))
+        arr.append(self.visit(node.definitions, depth))
+        arr.append(self.visit(node.begin_with, depth))
         return ''.join(arr)
         
 
     @when(DefinitionsNode)
     def visit(self, node: DefinitionsNode, depth: int = 0):
-            
         return ''.join([self.visit(child,depth) for child in node.functions])
 
     @when(BeginWithNode)
@@ -361,7 +373,7 @@ class CodeGenVisitor(object):
 
     @when(AssignNode)
     def visit(self,node: AssignNode, depth: int = 0):
-        return replace({'<id>' : self.visit(node.id,depth)
+        return replace({'<id>' : node.id
                        ,'<value>': self.visit(node.expr,depth)}
                        ,self.assign_code )
 
@@ -375,10 +387,10 @@ class CodeGenVisitor(object):
         # id a donde
         
         return replace({'<tab>' : '\t'*depth
-                       ,'<id>'  : self.visit(self, node.id,depth)
-                       ,'<src>' : self.visit(self, node.collec,depth)
-                       ,'<init>': self.visit(self, node.init,depth)
-                       ,'<len>' : self.visit(self, node.len,depth)
+                       ,'<id>'  : self.visit(node.id,depth)
+                       ,'<src>' : self.visit(node.collec,depth)
+                       ,'<init>': self.visit(node.init,depth)
+                       ,'<len>' : self.visit(node.len,depth)
                        ,'<type>': node.type }
                        , self.take_code)
     @when(LoopNode)
@@ -407,19 +419,20 @@ class CodeGenVisitor(object):
     @when(ArrayDeclarationNode)
     def visit(self,node: ArrayDeclarationNode,depth: int = 0):
         return replace({'<id>': node.id
-                       ,'<value>': self.visit(node.expr,depth)})
+                       ,'<array>': self.visit(node.expr,depth)
+                       ,'<type>': node.type},self.array_declaration_code)
         
     @when(SetIndexNode)
     def visit(self,node: SetIndexNode,depth: int = 0):
-        return replace({'<id>': self.visit(self, node.id,depth)
-                       ,'<index>': self.visit(self, node.expr,depth)
-                       ,'<expr>': self.visit(self, node.expr,depth)
+        return replace({'<id>': node.id
+                       ,'<index>': self.visit(node.index,depth)
+                       ,'<expr>': self.visit(node.expr,depth)
                        ,'<tab>': '\t'*depth}
                        ,self.set_index_code)
 
     @when(ConstantNode)#numeros, direc, bool, array
     def visit(self,node : ConstantNode,depth: int = 0):
-        if(node.type.name ==  'num'):
+        if(node.type.name ==  'int'):
             return str(node.lex)
         elif(node.type.name == 'vec'):
             return replace({'<a>': node.lex[0]
@@ -452,7 +465,7 @@ class CodeGenVisitor(object):
                        ,self.call_code)
 
     @when(BeginCallNode)
-    def view(self,node:BeginCallNode,depth):
+    def visit(self,node:BeginCallNode,depth):
         first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index,'num')) for index in node.args[0]]))
         args = [self.visit(item,depth) for item in node.args[1:]].insert(0,first_arg)
         origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0],'num')),depth)
@@ -466,7 +479,7 @@ class CodeGenVisitor(object):
 
     @when(ArrayNode)
     def visit(self,node:ArrayNode,depth):
-        return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.elements])})
+        return replace({'<content>': ','.join([self.visit(cont,depth) for cont in node.elements])},self.array_code)
 
 
     @when(NotNode)
@@ -481,7 +494,6 @@ class CodeGenVisitor(object):
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
             
 
-
     @when(MinusNode)
     def visit(self, node :MinusNode, depth :int = 0):
         if node.left.type is Int:
@@ -489,7 +501,6 @@ class CodeGenVisitor(object):
         elif node.left.type is Vector:
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
          
-
 
     @when(StarNode)
     def visit(self, node :StarNode, depth :int = 0):
@@ -499,14 +510,12 @@ class CodeGenVisitor(object):
             if node.right.type is Vector:
                 node.left , node.right = node.right, node.left
             return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
-         
-
+    
 
     @when(DivNode)
     def visit(self, node :DivNode, depth :int = 0):
         replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.DivNode_code)
-        
-
+   
 
     @when(ModNode)
     def visit(self, node :ModNode, depth :int = 0):
