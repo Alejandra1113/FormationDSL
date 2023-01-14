@@ -24,7 +24,7 @@ class PrintVisitor(object):
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, tabs: int = 0):
         str_tabs = '\t' * tabs
-        return f'\n{str_tabs}'.join(self.visit(t, tabs) for t in node.step)
+        return f'\n{str_tabs}'.join(self.visit(t, tabs + 1) for t in node.step)
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, tabs: int = 0):
@@ -39,7 +39,7 @@ class PrintVisitor(object):
     def visit(self, node: StepNode, tabs: int = 0):
         str_tabs = '\t' * tabs
         instructions = f'\n{str_tabs}'.join(self.visit(x) for x in node.instructions)
-        return f'step{instructions}'
+        return f'.step\n{str_tabs}{instructions}\n'
 
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode, tabs: int = 0):
@@ -111,7 +111,7 @@ class PrintVisitor(object):
     @when(DynamicCallNode)
     def visit(self, node: DynamicCallNode, tabs: int = 0):
         args = ', '.join(self.visit(x) for x in node.args)
-        return f'{node.head}.{node.lex}({args})'
+        return f'{self.visit(node.head)}.{node.lex}({args})'
 
     @when(CallNode)
     def visit(self, node: CallNode, tabs: int = 0):
@@ -123,16 +123,70 @@ class PrintVisitor(object):
         args = ', '.join(self.visit(x) for x in node.args)
         return f'line_up {node.lex} with {self.visit(node.args[0])} in {self.visit(node.poss)} heading {self.visit(node.rot)} args({args})'
 
+    @when(NotNode)
+    def visit(self, node: NotNode, tabs: int = 0):
+        return f'!{self.visit(node.expr)}'
 
+    @when(PlusNode)
+    def visit(self, node: PlusNode, tabs: int = 0):
+        return f'{self.visit(node.left)} + {self.visit(node.right)}'
 
-    @when(UnaryNode)
-    def visit(self, node: UnaryNode, tabs: int = 0):
-        return ''
+    @when(MinusNode)
+    def visit(self, node: MinusNode, tabs: int = 0):
+        return f'{self.visit(node.left)} - {self.visit(node.right)}'
 
-    @when(BinaryNode)
-    def visit(self, node: BinaryNode, tabs: int = 0):
-        return ''
+    @when(StarNode)
+    def visit(self, node: StarNode, tabs: int = 0):
+        return f'{self.visit(node.left)} * {self.visit(node.right)}'
 
-    @when(TernaryNode)
-    def visit(self, node: TernaryNode, tabs: int = 0):
-        return ''
+    @when(DivNode)
+    def visit(self, node: DivNode, tabs: int = 0):
+        return f'{self.visit(node.left)} / {self.visit(node.right)}'
+
+    @when(ModNode)
+    def visit(self, node: ModNode, tabs: int = 0):
+        return f'{self.visit(node.left)} % {self.visit(node.right)}'
+
+    @when(VectNode)
+    def visit(self, node: VectNode, tabs: int = 0):
+        return f'({self.visit(node.left)}, {self.visit(node.right)})'
+
+    @when(AndNode)
+    def visit(self, node: AndNode, tabs: int = 0):
+        return f'{self.visit(node.left)} & {self.visit(node.right)}'
+
+    @when(OrNode)
+    def visit(self, node: OrNode, tabs: int = 0):
+        return f'{self.visit(node.left)} | {self.visit(node.right)}'
+
+    @when(EqNode)
+    def visit(self, node: EqNode, tabs: int = 0):
+        return f'{self.visit(node.left)} == {self.visit(node.right)}'
+
+    @when(EqlNode)
+    def visit(self, node: EqlNode, tabs: int = 0):
+        return f'{self.visit(node.left)} <= {self.visit(node.right)}'
+
+    @when(EqgNode)
+    def visit(self, node: EqgNode, tabs: int = 0):
+        return f'{self.visit(node.left)} >= {self.visit(node.right)}'
+
+    @when(GtNode)
+    def visit(self, node: GtNode, tabs: int = 0):
+        return f'{self.visit(node.left)} > {self.visit(node.right)}'
+
+    @when(LtNode)
+    def visit(self, node: LtNode, tabs: int = 0):
+        return f'{self.visit(node.left)} < {self.visit(node.right)}'
+
+    @when(GetIndexNode)
+    def visit(self, node: GetIndexNode, tabs: int = 0):
+        return f'{self.visit(node.left)}[{self.visit(node.right)}]'
+
+    @when(SliceNode)
+    def visit(self, node: SliceNode, tabs: int = 0):
+        return f'[{self.visit(node.left)}:{self.visit(node.right)}]'
+
+    @when(LinkNode)
+    def visit(self, node: LinkNode, tabs: int = 0):
+        return f'{self.visit(node.left)} {self.visit(node.expr)} of {self.visit(node.right)}'

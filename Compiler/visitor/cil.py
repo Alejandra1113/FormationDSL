@@ -158,7 +158,7 @@ class CilVisitor(object):
         lines = []
         if node.dir == "prev":
             lines.append(VarDeclarationNode(temp, 'int', MinusNode(CallNode("len", [
-                         name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int())))
+                         VariableNode(name, Group())], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int())))
             link = LinkNode(
                 GetIndexNode(VariableNode(name, NodeType()), VariableNode(
                     temp, return_type=Int())),
