@@ -127,7 +127,7 @@ runner = PosRunner()"""
 func_def_code = """def <id>(<params>,rot):
 <tab>old_dir = <origin>[0].direction
 <tab><origin>[0].direction = rot
-<body><tab><origin>[0].direction = old_dir
+<body>\n<tab><origin>[0].direction = old_dir
 """
 
 param_code = '<id>'
@@ -327,10 +327,12 @@ class CodeGenVisitor(object):
         
     def build_body_arr(self,body,current_depth):
         result_body = []
-        for line in body:
+        for i in range(0,len(body) - 1):
             result_body.append('\t'*current_depth)
-            result_body.append(self.visit(line,current_depth))
+            result_body.append(self.visit(body[i],current_depth))
             result_body.append(self.change_line_code)
+        result_body.append('\t'*current_depth)
+        result_body.append(self.visit(body[len(body) - 1],current_depth))
         return result_body
     
     @on('node')
@@ -488,10 +490,10 @@ class CodeGenVisitor(object):
 
     @when(BeginCallNode)
     def visit(self,node:BeginCallNode,depth):
-        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index,'int',Int())) for index in node.args[0].lex]),depth)
+        first_arg = self.visit(ArrayNode([GetIndexNode(VariableNode('G'), ConstantNode(index - 1,'int',Int())) for index in node.args[0].lex]),depth)
         args = [self.visit(item,depth) for item in node.args[1:]]
         args.insert(0,first_arg)
-        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0].lex[0],'int',Int())),depth)
+        origin = self.visit(GetIndexNode(VariableNode('G'), ConstantNode(node.args[0].lex[0] - 1,'int',Int())),depth)
         return replace({'<id>': node.lex
                        ,'<args>': ','.join(args)
                        ,'<rot>': self.visit(node.rot,depth)
