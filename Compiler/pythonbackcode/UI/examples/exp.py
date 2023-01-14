@@ -1,5 +1,5 @@
-from Agent.agent import Agent
-from entities._units import Knight
+# from Agent.agent import Agent
+# from entities._units import Knight
 
 
 river_and_montain = ['________',
