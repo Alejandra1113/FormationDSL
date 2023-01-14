@@ -1,4 +1,4 @@
-from Compiler.semantic.types import Bool, Int
+from Compiler.semantic.types import *
 import Compiler.utils as util
 from Compiler.semantic.language import *
 from .visitor import *
@@ -160,9 +160,9 @@ class CilVisitor(object):
             lines.append(VarDeclarationNode(temp, None, MinusNode(CallNode("len", [
                          name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int())))
             link = LinkNode(
-                GetIndexNode(name, VariableNode(
+                GetIndexNode(VariableNode(name, NodeType()), VariableNode(
                     temp, return_type=Int())),
-                GetIndexNode(name, MinusNode(VariableNode(
+                GetIndexNode(VariableNode(name, NodeType()), MinusNode(VariableNode(
                     temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()))),
                 expr
             )
@@ -173,9 +173,9 @@ class CilVisitor(object):
             lines.append(VarDeclarationNode(
                 temp, None, ConstantNode(0, 'int', return_type=Int())))
             link = LinkNode(
-                GetIndexNode(name, VariableNode(
+                GetIndexNode(VariableNode(name, NodeType()), VariableNode(
                     temp, return_type=Int())),
-                GetIndexNode(name, PlusNode(VariableNode(
+                GetIndexNode(VariableNode(name, NodeType()), PlusNode(VariableNode(
                     temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()))),
                 expr
             )
