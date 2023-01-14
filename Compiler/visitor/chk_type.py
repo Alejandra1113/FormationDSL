@@ -540,7 +540,7 @@ class TypeCheckerVisitor(object):
         if type(left_type) == Group:
             return_type = NodeType()
         elif type(left_type) == Array:
-            return_type == Int
+            return_type = Int()
         elif type(left_type) != TypeError:
             errors.append(return_type)
         util.update_errs(errors, left_err)
