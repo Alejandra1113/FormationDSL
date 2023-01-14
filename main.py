@@ -4,11 +4,11 @@ from Compiler.Parser import LR1Parser
 from Compiler.Grammar import Gram
 from Compiler.visitor import *
 
-_scope = ScopeCheckerVisitor()
 _semantic = SemanticCheckerVisitor()
+_scope = ScopeCheckerVisitor()
 _type = TypeCheckerVisitor()
-_cil = CilVisitor()
 _print = PrintVisitor()
+_cil = CilVisitor()
 
 path = ".\\code.txt"
 with open(path, "r") as file:

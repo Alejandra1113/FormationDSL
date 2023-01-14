@@ -10,6 +10,7 @@ def prueba(int a){
 }
 
 def dos_filas(){
+    int temp  = G.len() // 2
     int resto = G.len() % 2
     int i = 0
     while(i < temp + resto){
@@ -31,8 +32,8 @@ def dos_columnas()
     prim[0] left of G[0]
 }
 
-begin_with 5
-    line_up dos_fila with [1,2,3] in (0,0) heading up args()
+begin_with 3
+    line_up dos_filas with [1,2,3] in (0,0) heading up args()
     line_up dos_columnas with [4,5] in (2,0) heading up_left args()
 step
     line_up dos_columnas with [1,2,3] in (0,0) heading up args()

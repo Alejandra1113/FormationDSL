@@ -222,12 +222,19 @@ class SemanticCheckerVisitor(object):
         return None
 
     @when(BeginCallNode)
-    def visit(self, node: BeginCallNode, context: OtherContext, index: int = 0):
+    def visit(self, node: BeginCallNode, context: StepContext, index: int = 0):
         errors = []
         if not context.is_func_defined(node.lex, len(node.args)):
             errors.append(
                 f"funcion {node.lex} no esta definida con {len(node.args)} argumentos")
-        for arg in node.args:
+        arg = node.args[0]
+        arg_err = self.visit(arg, context, index)
+        util.update_errs(errors, arg_err)
+        if not arg_err:
+            context.define_members(arg.lex)
+            if context.error_member:
+                errors.append(f'integrantes del grupo invalidos')
+        for arg in node.args[1:]:
             arg_err = self.visit(arg, context, index)
             util.update_errs(errors, arg_err)
 
