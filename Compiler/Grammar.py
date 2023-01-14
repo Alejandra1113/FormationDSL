@@ -89,7 +89,7 @@ ARG1 %= Gram.Epsilon, lambda h, s: []
 
 
 I %= obra + num + I2 + cbra, lambda h, s: ConstantNode([s[2]] + s[3], Group())
-I %= obra + num + two_points + num + cbra, lambda h, s: SliceNode(s[2], s[4])
+I %= obra + num + two_points + num + cbra, lambda h, s: SliceNode(ConstantNode(s[2]), ConstantNode(s[4]))
 
 I2 %= comma + num + I2, lambda h, s: [s[2]] + s[3]
 I2 %= Gram.Epsilon, lambda h, s: []

@@ -1,7 +1,7 @@
 import Compiler.semantic.language as lg
 
 __all__ = ['VariableInfo', 'FunctionInfo', 'Type', 'Int',
-           'Vector', 'Bool', 'Array', 'Group']
+           'Vector', 'Bool', 'Array', 'Group', 'NodeType']
 
 
 class VariableInfo:

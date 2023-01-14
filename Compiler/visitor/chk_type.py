@@ -554,7 +554,20 @@ class TypeCheckerVisitor(object):
 
     @ when(SliceNode)
     def visit(self, node: SliceNode, context: OtherContext, index: int):
-        pass
+        errors = []
+        left_err = self.visit(node.left, context, index)
+        left_type = node.left.return_type
+
+        util.update_err_type(errors, Int(), left_type)
+        util.update_errs(errors, left_err)
+
+        right_err = self.visit(node.right, context, index)
+        right_type = node.right.return_type
+
+        util.update_err_type(errors, Int(), right_type)
+        util.update_errs(errors, right_err)
+        node.return_type = Group()
+        return errors if len(errors) else None
 
     @ when(LinkNode)
     def visit(self, node: LinkNode, context: OtherContext, index: int = 0):
