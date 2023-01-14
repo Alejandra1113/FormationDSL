@@ -66,8 +66,10 @@ class TypeCheckerVisitor(object):
         expr_err = self.visit(node.expr, context, index)
         expr_type = node.expr.return_type
 
-        var_type = context.get_variable_info(node.id).type
-        util.update_err_type(errors, var_type, expr_type)
+        var = context.get_variable_info(node.id)
+        if var:
+            var_type = var.type
+            util.update_err_type(errors, var_type, expr_type)
         util.update_errs(errors, expr_err)
         node.return_type = None
         return errors if len(errors) else None
@@ -78,8 +80,10 @@ class TypeCheckerVisitor(object):
         expr_err = self.visit(node.expr, context, index)
         expr_type = node.expr.return_type
 
-        var_type = context.get_variable_info(node.id).type
-        util.update_err_type(errors, var_type, expr_type)
+        var = context.get_variable_info(node.id)
+        if var:
+            var_type = var.type
+            util.update_err_type(errors, var_type, expr_type)
         util.update_errs(errors, expr_err)
         node.return_type = None
         return errors if len(errors) else None
@@ -87,8 +91,10 @@ class TypeCheckerVisitor(object):
     @when(GroupVarDeclarationNode)
     def visit(self, node: GroupVarDeclarationNode, context: OtherContext, index: int = 0):
         errors = []
-        var_type = context.get_variable_info(node.id).type
-        collec_err = self.visit(node.collec, context, index)
+        var = context.get_variable_info(node.id)
+        if var:
+            var_type = var.type
+            collec_err = self.visit(node.collec, context, index)
         collec_type = node.collec.return_type
 
         util.update_err_type(errors, var_type, collec_type)
@@ -180,8 +186,12 @@ class TypeCheckerVisitor(object):
 
     @when(VariableNode)
     def visit(self, node: VariableNode, context: OtherContext, index: int = 0):
-        var_type = context.get_variable_info(node.lex).type
-        node.return_type = var_type
+        var = context.get_variable_info(node.lex)
+        if var:
+            var_type = context.get_variable_info(node.lex).type
+            node.return_type = var_type
+        else:
+            node.return_type = TypeError()
         return None
 
     @when(AssignNode)
@@ -190,8 +200,10 @@ class TypeCheckerVisitor(object):
         expr_err = self.visit(node.expr, context, index)
         expr_type = node.expr.return_type
 
-        var_type = context.get_variable_info(node.id).type
-        util.update_err_type(errors, var_type, expr_type)
+        var = context.get_variable_info(node.id)
+        if var:
+            var_type = var.type
+            util.update_err_type(errors, var_type, expr_type)
         util.update_errs(errors, expr_err)
         node.return_type = None
         return errors if len(errors) else None
@@ -199,7 +211,9 @@ class TypeCheckerVisitor(object):
     @when(SetIndexNode)
     def visit(self, node: SetIndexNode, context: OtherContext, index: int = 0):
         errors = []
-        var_type = context.get_variable_info(node.id).type
+        var = context.get_variable_info(node.id)
+        if var:
+            var_type = var.type
         expr_err = self.visit(node.expr, context, index)
         expr_type = node.expr.return_type
 

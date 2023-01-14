@@ -2,7 +2,7 @@ import sys
 import time
 import numpy as np
 import pygame as pg
-from _map_elements import *
+from ._map_elements import *
 
 # from entities import Cell
 from typing import Iterable
@@ -13,7 +13,7 @@ from ._grid import get_grid, get_sprint, transform
 # from IA._definitions import *
 
 class Render:
-    def __init__(self, condition, map: np.matrix = None, path: list(list(tuple(int,int))) = None ,width: int = 800, height: int = 600):
+    def __init__(self, condition, map: np.matrix = None, path: list(list((int,int))) = None ,width: int = 800, height: int = 600):
         """
         inicializador de clase, crea un screen de dimensiones (width, height)
 

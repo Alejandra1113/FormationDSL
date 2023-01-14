@@ -1,5 +1,5 @@
 import numpy as np
-from _map_elements import Cell, GrassCell, MountainCell, RoadCell, RiverCell, WallCell
+from .._map_elements import Cell, GrassCell, MountainCell, RoadCell, RiverCell, WallCell
 
 
 def paint_example_Cell(i: int, j: int, value) -> Cell:

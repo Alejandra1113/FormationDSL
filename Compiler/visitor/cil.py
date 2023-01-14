@@ -11,12 +11,20 @@ class CilVisitor(object):
     def __init__(self):
         self.var_names = {}
         self.temp_names = []
+        self.fun_names = {}
 
     def set_name(self, id):
         name = self.var_names.get(id)
         if not name:
             name = f"var_{len(self.var_names)}"
             self.var_names[id] = name
+        return name
+    
+    def set_function(self, id):
+        name = self.fun_names.get(id)
+        if not name:
+            name = f"fun_{len(self.fun_names)}"
+            self.fun_names[id] = name
         return name
 
     @on('node')
@@ -65,7 +73,7 @@ class CilVisitor(object):
             inst = self.visit(instruction)
             body += inst if type(inst) is list else [inst]
 
-        return FuncDeclarationNode(node.id, params, body)
+        return FuncDeclarationNode(self.set_function(node.id), params, body)
 
     @when(ParamArrayNode)
     def visit(self, node):
@@ -145,7 +153,7 @@ class CilVisitor(object):
 
         for a in node.args:
             arg.append(self.visit(a))
-        return CallNode(node.lex, arg, node.return_type)
+        return CallNode(self.fun_names(node.lex), arg, node.return_type)
 
     @when(IterNode)
     def visit(self, node):
