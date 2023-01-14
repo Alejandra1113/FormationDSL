@@ -231,7 +231,8 @@ class SemanticCheckerVisitor(object):
         arg_err = self.visit(arg, context, index)
         util.update_errs(errors, arg_err)
         if not arg_err:
-            context.define_members(arg.lex)
+            members = arg.lex if type(arg) is ConstantNode else list(range(arg.left.lex, arg.right.lex + 1))
+            context.define_members(members)
             if context.error_member:
                 errors.append(f'integrantes del grupo invalidos')
         for arg in node.args[1:]:
