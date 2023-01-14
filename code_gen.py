@@ -116,25 +116,26 @@ def fun_1(var_0,rot):
 	var_5 = len(var_0) % 2
 	var_2 = 0
 	while(var_2 < var_4 + var_5):
-		if(var_2 < var_4 + 1):
-			of_rel(var_0[var_4 + 1],var_0[var_2],(1,0))
+		if(var_2 < var_4):
+			of_rel(var_0[var_4 + var_2],var_0[var_2],(1,0))
 		if(var_2 > 0):
-			of_rel(var_0[var_4 + var_2 + 1],var_0[var_4 + 1],(0,-1))
+			of_rel(var_0[var_4 + var_2 - 1],var_0[var_4 + var_2],(0,-1))
+		var_2 = var_2 + 1
 	var_0[0].direction = old_dir
 
 def fun_2(var_0,rot):
 	old_dir = var_0[0].direction
 	var_0[0].direction = rot
 	var_6 = []
-	borrow(var_0,var_6,0,len(var_0) // 2)
-	temp_0 = len(var_6) + 1
+	borrow(var_0,var_6,len(var_0) // 2,0)
+	temp_0 = len(var_6) - 1
 	while(temp_0 > 0):
-		of_rel(var_6[temp_0],var_6[temp_0 + 1],(1,0))
-		temp_0 = temp_0 + 1
-	temp_1 = len(var_0) + 1
+		of_rel(var_6[temp_0],var_6[temp_0 - 1],(1,0))
+		temp_0 = temp_0 - 1
+	temp_1 = len(var_0) - 1
 	while(temp_1 > 0):
-		of_rel(var_0[temp_1],var_0[temp_1 + 1],(1,0))
-		temp_1 = temp_1 + 1
+		of_rel(var_0[temp_1],var_0[temp_1 - 1],(1,0))
+		temp_1 = temp_1 - 1
 	of_rel(var_6[0],var_0[0],(0,-1))
 	var_0[0].direction = old_dir
 
@@ -172,5 +173,5 @@ pg.init()
 table, path = get_formation_route(steps)
 table = examples.paint.get_example_grid(table)
 condition = lambda x: x < len(path[0]) - 1
-render = Render(lambda:condition, table, path , width=1400, height=800)
+render = Render(condition, table, path , width=1400, height=800)
 render.start()

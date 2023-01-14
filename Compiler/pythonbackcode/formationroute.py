@@ -3,8 +3,6 @@ from .whcastar import *
 from .UI import *
 import pygame as pg 
 
-step = [ [(-1,0),(2,3),(-2,1)], [(0,-3),(3,5),(5,2) ], [(2,5),(3,4),(0,0)]]
-
 def get_formation_route(step_positions : list(list((int,int)))):
     
     min_x = min([x for k in step_positions for x,y in k ])
@@ -29,8 +27,8 @@ def get_formation_route(step_positions : list(list((int,int)))):
     path = [[] for i in step_positions]
     rrastar_list = np.ndarray(shape=len(step_positions), dtype=RRAstar)
     ids = [i for i in range(len(step_positions))]
-    origin = [i for i in step_positions[0]]
-    destiny = [i for i in step_positions[1]]
+    origin = [i[0] for i in step_positions]
+    destiny = [i[1] for i in step_positions]
     
     while current_step < len(step_positions[0]):
     
@@ -47,10 +45,10 @@ def get_formation_route(step_positions : list(list((int,int)))):
             
     return table, path
 
-pg.init()
+# pg.init()
 
-table, path = get_formation_route(step)
-table = examples.paint.get_example_grid(table)
-condition = lambda x: x < len(path[0])
-render = Render(lambda x :condition(x), table, path , width=1400, height=800)
-render.start()
+# table, path = get_formation_route(step)
+# table = examples.paint.get_example_grid(table)
+# condition = lambda x: x < len(path[0])
+# render = Render(lambda x :condition(x), table, path , width=1400, height=800)
+# render.start()

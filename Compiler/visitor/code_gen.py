@@ -136,13 +136,13 @@ param_code = '<id>'
 
 assign_code = '<id> = <value>'
 
-take_code = '<id> = []\n<tab>borrow(<src>,<id>,<init>,<len>)'
+take_code = '<id> = []\n<tab>borrow(<src>,<id>,<len>,<init>)'
 
 declaration_code = '<id> = <expr>'
 
 while_code = 'while(<cond>):\n<body>'
 
-borrow_code = 'borrow(<src>,<dst>,<init>,<len>)'
+borrow_code = 'borrow(<src>,<dst>,<len>,<init>)'
 
 if_code = 'if(<cond>):\n<body>'
 
@@ -561,19 +561,19 @@ class CodeGenVisitor(object):
     @when(MinusNode)
     def visit(self, node :MinusNode, depth :int = 0):
         if type(node.left.return_type) == Int:
-            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
+            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.MinusNode_code)
         elif type(node.left.return_type) == Vector:
-            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
+            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.MinusNode_vector_code)
          
 
     @when(StarNode)
     def visit(self, node :StarNode, depth :int = 0):
         if node.left.return_type is Int and node.right.return_type is Int:
-            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.PlusNode_code)
+            return replace({'<left>': self.visit(node.left, depth), '<right>': self.visit(node.right, depth) }, self.StarNode_code)
         elif node.left.return_type is Vector or node.right.return_type is Vector:
             if node.right.return_type is Vector:
                 node.left , node.right = node.right, node.left
-            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.PlusNode_vector_code)
+            return replace({'<a>': self.visit(node.left, depth), '<b>': self.visit(node.right, depth) }, self.StarNode_vector_code)
     
 
     @when(DivNode)

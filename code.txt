@@ -14,13 +14,14 @@ def dos_filas(){
     int resto = G.len() % 2
     int i = 0
     while(i < temp + resto){
-        if(i < temp - 1){
-            G[temp + 1] down of G[i]
+        if(i < temp){
+            G[temp + i] down of G[i]
         }
-        if( i > 0)
+        if(i > 0)
         {
-            G[temp + i - 1] left of G[temp + 1]
+            G[temp + i - 1] left of G[temp + i]
         }
+        i = i + 1
     }
 }
 

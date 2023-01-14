@@ -50,4 +50,3 @@ code = _gen.visit(ast_cil)
 gen_path = ".\\code_gen.py"
 with open(gen_path, "w") as file:
     text = file.write(code)
-exec(code)
