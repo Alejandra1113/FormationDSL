@@ -86,7 +86,7 @@ class PrintVisitor(object):
         str_tabs = '\t' * tabs
         str_if = '\t' * (tabs - 1)
         body = f'\n{str_tabs}'.join(self.visit(t, tabs + 1) for t in node.body)
-        return f'if({self.visit(node.expr)}){"{" + body}\n{str_if + "}"}'
+        return f'if({self.visit(node.expr)}){"{"}\n{str_tabs + body}\n{str_if + "}"}'
 
     @when(AssignNode)
     def visit(self, node: AssignNode, tabs: int = 0):
