@@ -75,7 +75,7 @@ class PrintVisitor(object):
 
     @when(IterNode)
     def visit(self, node: IterNode, tabs: int = 0):
-        return f'all_of {self.visit(node.collec)} at {self.visit(node.expr)} of {self.visit(node.dir)}'
+        return f'all_of {self.visit(node.collec)} at {self.visit(node.expr)} of {node.dir}'
 
     @when(BorrowNode)
     def visit(self, node: BorrowNode, tabs: int = 0):

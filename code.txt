@@ -1,0 +1,40 @@
+definition
+
+def prueba(int a){
+    int i = 0
+    int[] b = [1, 2, 3, 4]
+    while(i < b.len()){
+        b[i] = b[i] + 1
+        i = i + 1
+    }
+}
+
+def dos_filas(){
+    int resto = G.len() % 2
+    int i = 0
+    while(i < temp + resto){
+        if(i < temp - 1){
+            G[temp + 1] down of G[i]
+        }
+        if( i > 0)
+        {
+            G[temp + i - 1] left of G[temp + 1]
+        }
+    }
+}
+
+def dos_columnas()
+{
+    group prim = from G take G.len()//2 starting_at 0
+    all_of prim at down of prev
+    all_of G at down of prev
+    prim[0] left of G[0]
+}
+
+begin_with 5
+    line_up dos_fila with [1,2,3] in (0,0) heading up args()
+    line_up dos_columnas with [4,5] in (2,0) heading up_left args()
+step
+    line_up dos_columnas with [1,2,3] in (0,0) heading up args()
+    line_up dos_filas with [4,5] in (0,2) heading up args()
+end

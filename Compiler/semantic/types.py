@@ -52,6 +52,11 @@ class Type:
     def __eq__(self, __o: object) -> bool:
         return type(__o) == type(self) and self.name == __o.name
 
+    def __str__(self) -> str:
+        return self.__class__.__name__
+
+    def __repr__(self) -> str:
+        return self.__class__.__name__
 
 class Int(Type):
     pass
