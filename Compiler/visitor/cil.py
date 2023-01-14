@@ -116,7 +116,8 @@ class CilVisitor(object):
         ###############################
         init = self.visit(node.init)
         lenn = self.visit(node.len)
-        return GroupVarDeclarationNode(node.type, self.set_name(node.id), self.set_name(node.collec), init, lenn)
+        col = self.visit(node.collec)
+        return GroupVarDeclarationNode(node.type, self.set_name(node.id), col, init, lenn)
 
     @when(LoopNode)
     def visit(self, node):
