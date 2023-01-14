@@ -24,20 +24,22 @@ class PrintVisitor(object):
     @when(BeginWithNode)
     def visit(self, node: BeginWithNode, tabs: int = 0):
         str_tabs = '\t' * tabs
-        return f'\n{str_tabs}'.join(self.visit(t, tabs + 1) for t in node.step)
+        return f'\n{str_tabs}'.join(self.visit(t, tabs) for t in node.step)
 
     @when(FuncDeclarationNode)
     def visit(self, node: FuncDeclarationNode, tabs: int = 0):
         str_tabs = '\t' * tabs
         str_close_tabs = '\t' * (tabs - 1)
         params = ', '.join(self.visit(x) for x in node.params)
-        instructions = f'\n{str_tabs}'.join(self.visit(x, tabs + 1) for x in node.body)
+        instructions = f'\n{str_tabs}'.join(
+            self.visit(x, tabs + 1) for x in node.body)
         return f'def {node.id}({params}){{\n{str_tabs}{instructions}\n{str_close_tabs}}}'
 
     @when(StepNode)
     def visit(self, node: StepNode, tabs: int = 0):
         str_tabs = '\t' * tabs
-        return f'\n{str_tabs}'.join(self.visit(x) for x in node.instructions)
+        instructions = f'\n{str_tabs}'.join(self.visit(x) for x in node.instructions)
+        return f'step{instructions}'
 
     @when(VarDeclarationNode)
     def visit(self, node: VarDeclarationNode, tabs: int = 0):
@@ -62,26 +64,75 @@ class PrintVisitor(object):
     @when(LoopNode)
     def visit(self, node: LoopNode, tabs: int = 0):
         str_tabs = '\t' * tabs
-        str_while =  '\t' * (tabs - 1)
-        body = f'\n{str_tabs}'.join(self.visit(t) for t in node.body)
-        return f'while({self.visit(node.expr)}){"{" + body}\n{str_while + "}"}'
+        str_while = '\t' * (tabs - 1)
+        body = f'\n{str_tabs}'.join(self.visit(t, tabs + 1) for t in node.body)
+        return f'while({self.visit(node.expr)}){"{"}\n{str_tabs + body}\n{str_while + "}"}'
 
     @when(ArrayNode)
     def visit(self, node: ArrayNode, tabs: int = 0):
-        return ''
+        str_elements = ', '.join(self.visit(t) for t in node.elements)
+        return f'[{str_elements}]'
 
     @when(IterNode)
     def visit(self, node: IterNode, tabs: int = 0):
-        return ''
+        return f'all_of {self.visit(node.collec)} at {self.visit(node.expr)} of {self.visit(node.dir)}'
 
     @when(BorrowNode)
     def visit(self, node: BorrowNode, tabs: int = 0):
-        return ''
+        return f'from {self.visit(node.from_collec)} borrow {self.visit(node.len)} starting_at {self.visit(node.init)} to {self.visit(node.to_collec)}'
 
     @when(ConditionNode)
     def visit(self, node: ConditionNode, tabs: int = 0):
+        str_tabs = '\t' * tabs
+        str_if = '\t' * (tabs - 1)
+        body = f'\n{str_tabs}'.join(self.visit(t, tabs + 1) for t in node.body)
+        return f'if({self.visit(node.expr)}){"{" + body}\n{str_if + "}"}'
+
+    @when(AssignNode)
+    def visit(self, node: AssignNode, tabs: int = 0):
+        return f'{node.id} = {self.visit(node.expr)}'
+
+    @when(SetIndexNode)
+    def visit(self, node: SetIndexNode, tabs: int = 0):
+        return f'{node.id}[{self.visit(node.index)}] = {self.visit(node.expr)}'
+
+    @when(ConstantNode)
+    def visit(self, node: ConstantNode, tabs: int = 0):
+        return f'{node.lex}'
+
+    @when(VariableNode)
+    def visit(self, node: VariableNode, tabs: int = 0):
+        return f'{node.lex}'
+
+    @when(SpecialNode)
+    def visit(self, node: SpecialNode, tabs: int = 0):
+        return f'{node.lex}'
+
+    @when(DynamicCallNode)
+    def visit(self, node: DynamicCallNode, tabs: int = 0):
+        args = ', '.join(self.visit(x) for x in node.args)
+        return f'{node.head}.{node.lex}({args})'
+
+    @when(CallNode)
+    def visit(self, node: CallNode, tabs: int = 0):
+        args = ', '.join(self.visit(x) for x in node.args)
+        return f'{node.lex}({args})'
+
+    @when(BeginCallNode)
+    def visit(self, node: BeginCallNode, tabs: int = 0):
+        args = ', '.join(self.visit(x) for x in node.args)
+        return f'line_up {node.lex} with {self.visit(node.args[0])} in {self.visit(node.poss)} heading {self.visit(node.rot)} args({args})'
+
+
+
+    @when(UnaryNode)
+    def visit(self, node: UnaryNode, tabs: int = 0):
         return ''
 
-    @when(ExpressionNode)
-    def visit(self, node: ExpressionNode, tabs: int = 0):
+    @when(BinaryNode)
+    def visit(self, node: BinaryNode, tabs: int = 0):
+        return ''
+
+    @when(TernaryNode)
+    def visit(self, node: TernaryNode, tabs: int = 0):
         return ''

@@ -157,7 +157,7 @@ class CilVisitor(object):
         self.temp_names.append(temp)
         lines = []
         if node.dir == "prev":
-            lines.append(VarDeclarationNode(temp, None, MinusNode(CallNode("len", [
+            lines.append(VarDeclarationNode(temp, 'int', MinusNode(CallNode("len", [
                          name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int())))
             link = LinkNode(
                 GetIndexNode(VariableNode(name, NodeType()), VariableNode(
@@ -167,11 +167,11 @@ class CilVisitor(object):
                 expr
             )
 
-            lines.append(LoopNode(GtNode(name, ConstantNode(0, 'int', return_type=Int()), return_type=Bool()), [link, AssignNode(temp, MinusNode(
+            lines.append(LoopNode(GtNode(VariableNode( temp, Int()), ConstantNode(0, 'int', return_type=Int()), return_type=Bool()), [link, AssignNode(temp, MinusNode(
                 VariableNode(temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int()))]))
         else:
             lines.append(VarDeclarationNode(
-                temp, None, ConstantNode(0, 'int', return_type=Int())))
+                temp, 'int', ConstantNode(0, 'int', return_type=Int())))
             link = LinkNode(
                 GetIndexNode(VariableNode(name, NodeType()), VariableNode(
                     temp, return_type=Int())),
@@ -179,7 +179,7 @@ class CilVisitor(object):
                     temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int()))),
                 expr
             )
-            lines.append(LoopNode(LtNode(name, MinusNode(CallNode("len", [name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int()), return_type=Bool()), [
+            lines.append(LoopNode(LtNode(VariableNode( temp, Int()), MinusNode(CallNode("len", [name], return_type=Int()), ConstantNode(1, 'int', return_type=Int()), return_type=Int()), return_type=Bool()), [
                          link, AssignNode(temp, PlusNode(VariableNode(temp, return_type=Int()), ConstantNode(1, 'int', return_type=Int())))]))
 
         return lines
