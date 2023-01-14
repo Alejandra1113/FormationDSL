@@ -43,9 +43,7 @@ class ScopeCheckerVisitor(object):
         args = []
         errors = []
         for get_arg in node.params:
-            get_type, get_err = util.get_type(get_arg.type)
-            if get_err:
-                errors.append(get_err)
+            get_type, _ = util.get_type(get_arg.type)
             args.append(get_type)
 
         args_str = "".join([f"{arg}, " for arg in args[:-1]] + [str(args[-1])]) if len(args) else ""

@@ -90,9 +90,9 @@ class LoopNode(StatementNode):
 
 
 class ArrayNode(StatementNode):
-    def __init__(self, elements, type = None):
+    def __init__(self, elements, return_type = None):
         self.elements = elements
-        self.type = type
+        self.return_type = return_type
 
 
 class IterNode(StatementNode):
@@ -117,36 +117,35 @@ class ConditionNode(StatementNode):
 
 
 class AssignNode(ExpressionNode):
-    def __init__(self, idx, expr, type =None):
+    def __init__(self, idx, expr):
         self.id = idx
         self.expr = expr
-        self.type = type
 
 
 class SetIndexNode(ExpressionNode):
-    def __init__(self, idx, index, expr, type = None):
+    def __init__(self, idx, index, expr):
         self.id = idx
         self.index = index
         self.expr = expr
 
 
 class AtomicNode(ExpressionNode):
-    def __init__(self, lex, type =None):
+    def __init__(self, lex, return_type = None):
         self.lex = lex
-        self.type = type
+        self.return_type = return_type
 
 
 class UnaryNode(ExpressionNode):
-    def __init__(self, expr, type =None):
+    def __init__(self, expr, return_type = None):
         self.expr = expr
-        self.type = type
+        self.return_type = return_type
 
 
 class BinaryNode(ExpressionNode):
-    def __init__(self, left, right, type =None):
+    def __init__(self, left, right, return_type = None):
         self.left = left
         self.right = right
-        self.type = type
+        self.return_type = return_type
 
 
 class TernaryNode(ExpressionNode):
@@ -157,7 +156,9 @@ class TernaryNode(ExpressionNode):
 
 
 class ConstantNode(AtomicNode):
-    pass
+    def __init__(self, lex, type, return_type=None):
+        self.type = type
+        AtomicNode.__init__(self, lex, return_type)
 
 class VariableNode(AtomicNode):
     pass
@@ -169,18 +170,16 @@ class SpecialNode(AtomicNode):
     pass
 
 class DynamicCallNode(AtomicNode):
-    def __init__(self, idx, head, args, type =None):
-        AtomicNode.__init__(self, idx)
+    def __init__(self, idx, head, args, return_type = None):
+        AtomicNode.__init__(self, idx, return_type)
         self.head = head
         self.args = args
-        self.type = type
 
 
 class CallNode(AtomicNode):
-    def __init__(self, idx, args, type = None):
-        AtomicNode.__init__(self, idx)
+    def __init__(self, idx, args, return_type = None):
+        AtomicNode.__init__(self, idx, return_type)
         self.args = args
-        self.type = type
 
 
 class BeginCallNode(AtomicNode):
