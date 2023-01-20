@@ -266,14 +266,23 @@ Esta nueva cadena de código se tokeniza con el método `tokenize`, los `fixed_t
 Para parsear la gramática utilizamos un parser LR(1), para esto utilizamos las clases `ShiftReduceParser` y `LR1Parser` que fueron completadas de los ejercicios propuestos en clase práctica. En el cómputo de la tablas goto y action se utilizaron los métodos auxiliares para determinar los firsts y la clausura para construir el autómata, todos estos se encuentran en el archivo `automata.py` y el parser en `Parser.py`.
 
 Como el autómata generado por la gramática se utiliza solo para generar las tablas de goto y actions, y computarlo es costoso, se guardan las tablas en los archivos `actions` y `goto` para no tener que generarlas en cada proceso de parsing.
+
 # AST
 
 La construccion del AST se realiza en paralelo al proceso de parsing, se aprovecha que la gramática es LR(1) para llevar una pila en la que se van incluyendo nodos con cada SHIFT y en la que se sacan los nodos y se pasan como valores sintetizados para la construcción de otros nodosen cada REDUCE.
 
 Para los nodos se estableció una jerarquía, basada en la propuesta en clase práctica y enriquecida con nuevos nodos específicos del DSL como los `BorrowNode`, `BeginNode`, `LinkNode`, entre otros. Estas clases se encuentran en `semantic\languaje.py`
+
 # Checkeo Semántico y de Tipos
 
 Para hacer el checkeo de tipos, así como que solo se llamen funciones definidas y el uso de variables declaradas se utilizó el patrón de diseño Visitor. Como el DSL es de tipado estático se programó una jerarquia de clases que responden a los tipos permitidos (int, bool, vector, group y array) los cuales se encuentran en `semantic\types.py` y haciendo uso de las mismas se revisa con el `visitor\chk_type.py` que las operaciones realizadas en tre tipos sean correctas.
 
-Con el chequeo 
-# Generación de código Python 
+Con el chequeo semántico primero se realiza un recorrido recolectando los nombres de funciones y de las variables declaradas con el Visitor presente en el archivo `visitor\chk_semantic.py` además se reivisa el correcto usode las variables dentro de los scopes o contextos en el recorrido realizado en `visitor\chk_scope`.
+
+# Generación de código Python
+
+En el proceso de generación de código python, primeramente se pasó a un código intermedio en el que expresiones propias del DSL, como el `all_of`,  se expresaron de 
+una forma más cercana a python, se declararon variables temporales necesarias y se renombraron funciones y variables para que no interfieran con las que se creen posteriormente en otras etapas de la generación de código. Este traspaso a un código intermedio se realiza también utilizando el patrón de diseño Visitor con el código presente en `visitor\cil.py`.
+
+
+El código correspondiente a la generación de código python está en el archivo `visitor\code_gen.py`, para este paso se crearon plantillas de código para cada instrucción del AST del código intermedio en el que además se agregaron las instrucciones necesarias para que se obtuviera el output del programa como una representación visual de las formaciones y sus transiciones en pygame, importando las clases de python presentes en `pythonbackcode`.
